@@ -3,7 +3,7 @@
 
 Scene::Scene()
 {
-	objects = std::vector<std::shared_ptr<Object>>();
+	objects = std::vector<std::unique_ptr<Object>>();
 }
 
 void Scene::draw()
@@ -52,7 +52,7 @@ void Scene::getVertices(GLfloat* vertices, int* index)
 
 
 
-void Scene::addObject(std::shared_ptr<Object> object)
+void Scene::addObject(std::unique_ptr<Object>& object)
 {
 	objects.push_back(std::move(object));
 }
