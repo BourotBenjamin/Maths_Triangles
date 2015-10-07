@@ -3,10 +3,10 @@
 
 Object::Object()
 {
-	triangles = std::vector<std::shared_ptr<Triangle>>();
+	triangles = std::vector<std::unique_ptr<Triangle>>();
 }
 
-void Object::addTriangle(std::shared_ptr<Triangle> triangle)
+void Object::addTriangle(std::unique_ptr<Triangle> triangle)
 {
 	triangles.push_back(std::move(triangle));
 }

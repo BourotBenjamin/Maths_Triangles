@@ -143,9 +143,9 @@ int main()
 {
 	Scene scene = Scene();
 	Object object = Object();
-	Triangle triangle = Triangle(std::shared_ptr<Point>(new Point(0.5f, 0.5f)), std::shared_ptr<Point>(new Point(0.5f, -0.5f)), std::shared_ptr<Point>(new Point(-0.5f, 0.5f)));
-	object.addTriangle(std::shared_ptr<Triangle>(&triangle));
-	scene.addObject(std::shared_ptr<Object>(&object));
+	Triangle triangle = Triangle(std::unique_ptr<Point>(new Point(0.5f, 0.5f)), std::unique_ptr<Point>(new Point(0.5f, -0.5f)), std::unique_ptr<Point>(new Point(-0.5f, 0.5f)));
+	object.addTriangle(std::unique_ptr<Triangle>(&triangle));
+	scene.addObject(std::unique_ptr<Object>(&object));
 	int r = window_init();
 	if (r < 0)
 		return r;
