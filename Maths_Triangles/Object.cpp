@@ -6,7 +6,7 @@ Object::Object()
 	triangles = std::vector<std::unique_ptr<Triangle>>();
 }
 
-void Object::addTriangle(std::unique_ptr<Triangle> triangle)
+void Object::addTriangle(std::unique_ptr<Triangle>& triangle)
 {
 	triangles.push_back(std::move(triangle));
 }

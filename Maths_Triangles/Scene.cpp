@@ -52,7 +52,7 @@ void Scene::getVertices(GLfloat* vertices, int* index)
 
 
 
-void Scene::addObject(std::unique_ptr<Object> object)
+void Scene::addObject(std::unique_ptr<Object>& object)
 {
 	objects.push_back(std::move(object));
 }

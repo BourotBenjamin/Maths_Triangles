@@ -3,7 +3,7 @@ class Scene
 {
 public:
 	Scene();
-	void addObject(std::unique_ptr<Object> object);
+	void addObject(std::unique_ptr<Object>& object);
 	void draw();
 	void getVertices(GLfloat* vertices, int* index);
 	int getVerticesSize();
