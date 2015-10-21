@@ -1,0 +1,49 @@
+#include "Triangle.h"
+
+
+Triangle::Triangle(unsigned short indice1, unsigned short indice2, unsigned short indice3)
+{
+	this->indice1 = indice1;
+	this->indice2 = indice2;
+	this->indice3 = indice3;
+}
+
+void Triangle::setPoints(std::shared_ptr<Point>& p0, std::shared_ptr<Point>& p1, std::shared_ptr<Point>& p2) 
+{ 
+	points.empty();
+	points.push_back(p0);
+	points.push_back(p1);
+	points.push_back(p2);
+}
+
+void Triangle::draw()
+{
+	auto currentPoint = points.begin();
+	while (currentPoint != points.end())
+	{
+		(*currentPoint)->draw();
+		currentPoint++;
+	}
+}
+
+
+
+void Triangle::getVertices(GLfloat* vertices, int* index)
+{
+	auto currentPoint = points.begin();
+	while (currentPoint != points.end())
+	{
+		(*currentPoint)->getVertices(vertices, index);
+		currentPoint++;
+	}
+}
+
+std::vector<std::shared_ptr<Point>>& Triangle::getPoints()
+{
+	return points; 
+}
+
+Triangle::~Triangle()
+{
+	points.empty();
+}

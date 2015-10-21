@@ -1,6 +1,3 @@
-// projet maths
-// arretes adjacentes a deux triangles ne sont pas a tester pour le test de la visibilité avec le point courant ( triangulation quelconque )
-
 #ifndef WINDOW_H
 #define WINDOW_H
 // GLEW
@@ -21,16 +18,17 @@ const GLuint WIDTH = 800, HEIGHT = 600;
 int window_init();
 void updateVBO();
 void window_fillVBOPointsClicked();
+void enveloppeJarvis();
 int window_mainLoop(GLFWwindow* window, Scene& scene);
 void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int action, int mods);
 void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods);
 
+std::vector<std::shared_ptr<Point>> points;
 std::vector<float> vboCoords;
 std::shared_ptr<Point> p1, p2;
 std::shared_ptr<Object> o;
 Scene scene;
 GLuint VBO, VBO_POINTS;
-int pSize;
-std::vector<unsigned short> enveloppesSizes;
+int pSize, enveloppeSize;
 
 #endif

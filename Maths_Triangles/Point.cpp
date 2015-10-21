@@ -27,6 +27,27 @@ void Point::getVertices(GLfloat* vertices, int* index)
 	(*index) = (*index) + 3;
 }
 
+float Point::getX()
+{
+	return this->x;
+}
+
+float Point::getY()
+{
+	return this->y;
+}
+
+
+bool Point::operator==(Point& p)
+{
+	return (this->x == p.getX() && this->y == p.getY());
+}
+
+bool Point::operator!=(Point& p)
+{
+	return !this->operator==(p);
+}
+
 Point::~Point()
 {
 }

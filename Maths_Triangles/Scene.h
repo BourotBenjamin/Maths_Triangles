@@ -3,13 +3,13 @@ class Scene
 {
 public:
 	Scene();
-	void addObject(std::unique_ptr<Object>& object);
-	void draw();
-	void getVertices(GLfloat* vertices, int* index);
-	int getVerticesSize();
-	int getIndicesSize();
+	void addObject(std::shared_ptr<Object>& object);
+    std::shared_ptr<Point> getNearestPoint(float x, float y);
+	unsigned short Scene::getPoints(std::vector<float>& vboCoords);
+	void getJarvisEnveloppes(std::vector<float>& vboCoords, std::vector<unsigned short>& sizesEnveloppes);
 	~Scene();
 private:
-	std::vector<std::unique_ptr<Object>> objects;
+	std::vector<std::shared_ptr<Object>> objects;
+	std::vector<std::shared_ptr<Point>> points;
 };
 

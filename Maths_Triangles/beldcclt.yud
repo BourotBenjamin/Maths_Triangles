@@ -1,0 +1,255 @@
+#include "MyWindow.h"
+
+int window_init()
+{
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+	openGLWindow = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
+	if (openGLWindow == nullptr)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+
+	glfwMakeContextCurrent(openGLWindow); 
+	glewExperimental = GL_TRUE;
+	if (glewInit() != GLEW_OK)
+	{
+		std::cout << "Failed to initialize GLEW" << std::endl;
+		return -1;
+	}
+
+	glViewport(0, 0, WIDTH, HEIGHT);
+
+
+	glfwSetKeyCallback(openGLWindow, window_keyPressed);
+	glfwSetMouseButtonCallback(openGLWindow, window_onClick);
+	std::cout << "OpenGL Version " << glGetString(GL_VERSION) << std::endl;
+	return 0;
+}
+
+
+int window_mainLoop(GLFWwindow* openGLWindow)
+{
+
+	Shader ourShader("./VertexShader.txt", "./FragmentShader.txt");
+	ourShader.Use();
+	GLfloat height = (HEIGHT * 1.0f);
+	GLint heightlLoc = glGetUniformLocation(ourShader.Program, "height");
+	glUniformMatrix4fv(heightlLoc, 1, GL_FALSE, &height);
+	GLfloat width = (WIDTH * 1.0f);
+	GLint widthlLoc = glGetUniformLocation(ourShader.Program, "width");
+	glUniformMatrix4fv(widthlLoc, 1, GL_FALSE, &width);
+	glEnable(GL_PROGRAM_POINT_SIZE);
+	glPointSize(10);
+	/*GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	glBindVertexArray(VAO);
+	window_updateGraphics();
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+
+	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
+	*/
+
+	GLuint VAO_POINTS;
+	glGenVertexArrays(1, &VAO_POINTS);
+	glGenBuffers(1, &VBO_POINTS);
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	glBindVertexArray(VAO_POINTS);
+	window_updateGraphics();
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+
+	glBindVertexArray(0);
+
+	while (!glfwWindowShouldClose(openGLWindow))
+	{
+		glfwPollEvents();
+		glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+        ourShader.Use();
+		/*glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);*/
+		glBindVertexArray(VAO_POINTS);
+		glDrawArrays(GL_POINTS, 0, points.size());
+		glfwSwapBuffers(openGLWindow);
+	}
+
+	/*glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);*/
+	glDeleteVertexArrays(1, &VAO_POINTS);
+	glDeleteBuffers(1, &VBO_POINTS);
+	glfwTerminate();
+	return 0;
+}
+
+void window_updateGraphics()
+{
+	/*int verticesSize = scene.getVerticesSize();
+	GLfloat* vertices = (GLfloat*)malloc(sizeof(GLfloat)* verticesSize);
+	int index = 0;
+	scene.getVertices(vertices, &index);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, verticesSize * sizeof(GLfloat), vertices, GL_STATIC_DRAW);*/
+	int verticesPointsSize = 3 * points.size();
+	GLfloat* verticesPoints = (GLfloat*)malloc(sizeof(GLfloat)* verticesPointsSize);
+	int i = 0;
+	auto ptr = points.begin();
+	std::cout << verticesPointsSize << std::endl;
+	while (ptr != points.end())
+	{	
+
+		verticesPoints[i] = (*ptr)->getX();
+		verticesPoints[i+1] = (*ptr)->getY();
+		verticesPoints[i + 2] = 1.0f;
+		//std::cout << i << verticesPoints[i] << " ; " << verticesPoints[i + 1] << " ; " << verticesPoints[i + 2] << std::endl;
+		i+=3;
+		ptr++;
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_POINTS);
+	glBufferData(GL_ARRAY_BUFFER, verticesPointsSize * sizeof(GLfloat), verticesPoints, GL_STATIC_DRAW);
+	free(verticesPoints);
+}
+
+
+void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods)
+{
+	if (action == GLFW_RELEASE)
+	{
+		double x, y;
+		glfwGetCursorPos(activeWindow, &x, &y);
+		p1 = std::shared_ptr<Point>(new Point(x, y));
+		points.push_back(p1);
+		/*
+		if(p1 == nullptr)
+		{
+			p1 = std::shared_ptr<Point>(new Point(x, y));
+			points.push_back(p1);
+		}
+		else if (p2 == nullptr)
+		{
+			p2 = std::shared_ptr<Point>(new Point(x, y));
+			points.push_back(p2);
+		}
+		else
+		{
+			std::shared_ptr<Point> p3 = std::shared_ptr<Point>(new Point(x, y));
+			(*o).addTriangle(std::shared_ptr<Triangle>(new Triangle(p1, p2, p3)));
+			points.push_back(p3);
+			p1 = p2;
+			p2 = p3;
+			p3 = nullptr;
+		}*/
+		window_updateGraphics();
+	}
+}
+
+
+
+void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int action, int mode)
+{
+	// When a user presses the escape key, we set the WindowShouldClose property to true, 
+	// closing the application
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(activeWindow, GL_TRUE);
+	if (key == GLFW_KEY_N && action == GLFW_PRESS)
+    {
+        scene.addObject(o);
+		o = std::shared_ptr<Object>(new Object());
+        window_updateGraphics();
+    }
+    
+    
+}
+
+int main()
+{
+	scene = Scene();
+	o = std::shared_ptr<Object>(new Object());
+	int r = window_init();
+	if (r < 0)
+		return r;
+	else
+		return window_mainLoop(openGLWindow);
+	return 0;
+}
+
+
+std::shared_ptr<Point> getNearestPoint(float x, float y)
+{
+	auto pointsPtr = points.begin();
+	float min = FLT_MAX;
+	std::shared_ptr<Point> bestPoint = nullptr;
+	while (pointsPtr != points.end())
+	{
+		std::shared_ptr<Point> curPoint = (*pointsPtr);
+		float dist = sqrt(((curPoint->getX()) - x) * ((curPoint)->getX() - x) + ((curPoint)->getY() - y) * ((curPoint)->getY() - y));
+		if (dist < min)
+		{
+			bestPoint = curPoint;
+		}
+		pointsPtr++;
+	}
+	return bestPoint;
+}
+
+void enveloppeJarvis()
+{
+	if (points.size > 0)
+	{
+		std::vector<std::shared_ptr<Point>> enveloppe;
+		std::shared_ptr<Point> first = points.at(0), current = nullptr;
+		auto ptr = points.begin();
+		while (ptr != points.end())
+		{
+			if (first)
+			{
+				if (first->getX() > (*ptr)->getX())
+					first = (*ptr);
+				else if (first->getX() == (*ptr)->getX() && first->getY() > (*ptr)->getY())
+					first = (*ptr);
+			}
+			ptr++;
+		}
+		enveloppe.push_back(first);
+		Point p0 = Point(first->getX(), 0.0f);
+		std::shared_ptr<Point> lastP = std::shared_ptr<Point>(&p0), current = first, best = nullptr;
+		float angle = 0.0f, bestAngle = 0.0f;
+		while (current != first)
+		{
+			float v1X = current->getX() - lastP->getX(), v1Y = current->getY() - lastP->getY(), v2X = 0.0f, v2Y = 0.0f;
+			float l1 = sqrt(v1X*v1X + v1Y*v1Y), l2 = 0.0;
+			auto ptr = points.begin();
+			while (ptr != points.end())
+			{
+				v2X = (*ptr)->getX() - current->getX(), v2Y = (*ptr)->getY() - current->getY();
+				l2 = sqrt(v2X*v2X + v2Y*v2Y);
+				angle = 
+				// calc angle between lastP->current current->ptr
+				if (angle < bestAngle)
+				{
+					bestAngle = angle;
+					best = (*ptr);
+				}
+			}
+			lastP = current;
+			current = best;
+			enveloppe.push_back(best);
+		}
+	}
+
+}

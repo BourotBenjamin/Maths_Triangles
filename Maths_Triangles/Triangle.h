@@ -5,13 +5,13 @@
 class Triangle
 {
 public:
-	Triangle(std::unique_ptr<Point>& p0, std::unique_ptr<Point>& p1, std::unique_ptr<Point>& p2);
-	void setPoints(std::unique_ptr<Point>& p0, std::unique_ptr<Point>& p1, std::unique_ptr<Point>& p2);
-	std::vector<std::unique_ptr<Point>>& getPoints();
-	void draw();
-	void getVertices(GLfloat* vertices, int* index);
+	Triangle(unsigned short indice1, unsigned short indice2, unsigned short indice3);
+	void setIndices(unsigned short indice1, unsigned short indice2, unsigned short indice3);
+	unsigned short getIndice1();
+	unsigned short getIndice2();
+	unsigned short getIndice3();
 	~Triangle();
 private:
-	std::vector<std::unique_ptr<Point>> points;
+	unsigned short indice1, indice2, indice3;
 };
 

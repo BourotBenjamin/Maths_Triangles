@@ -16,6 +16,37 @@ void Object::addPoint(std::shared_ptr<Point>& p)
 	points.push_back(p);
 }
 
+void Object::draw()
+{
+	auto currentTriangle = triangles.begin();
+	while (currentTriangle != triangles.end())
+	{
+		(*currentTriangle)->draw();
+		currentTriangle++;
+	}
+}
+
+int Object::getVerticesSize()
+{
+	return triangles.size() * 9;
+}
+
+int Object::getIndicesSize()
+{
+	return triangles.size() * 3;
+}
+
+void Object::getVertices(GLfloat* vertices, int* index)
+{
+	auto currentTriangle = triangles.begin();
+	while (currentTriangle != triangles.end())
+	{
+		(*currentTriangle)->getVertices(vertices, index);
+		currentTriangle++;
+	}
+}
+
+
 std::shared_ptr<Point> Object::getNearestPoint(float x, float y)
 {
 	auto pointsPtr = points.begin();
