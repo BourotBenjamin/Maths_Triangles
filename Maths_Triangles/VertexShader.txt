@@ -3,8 +3,6 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 color;
 
 out vec3 ourColor;
-uniform int height;
-uniform int width;
 uniform mat4 projection;
 
 void main()

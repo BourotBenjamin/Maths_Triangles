@@ -23,7 +23,8 @@ void Scene::getJarvisEnveloppes(std::vector<float>& vboCoords, std::vector<unsig
 	auto currentObject = objects.begin();
 	while (currentObject != objects.end())
 	{
-		sizesEnveloppes.push_back((*currentObject)->getEnveloppeJarvis(vboCoords));
+		sizesEnveloppes.push_back((*currentObject)->getEnveloppeGrahamScan(vboCoords));
+		//sizesEnveloppes.push_back((*currentObject)->getEnveloppeJarvis(vboCoords));
 		currentObject++;
 	}
 }

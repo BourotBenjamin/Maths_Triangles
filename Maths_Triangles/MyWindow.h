@@ -1,8 +1,9 @@
 // projet maths
 // arretes adjacentes a deux triangles ne sont pas a tester pour le test de la visibilité avec le point courant ( triangulation quelconque )
-
+// 04/12
 #ifndef WINDOW_H
 #define WINDOW_H
+
 // GLEW
 #define GLEW_STATIC
 #include <GL/glew.h>

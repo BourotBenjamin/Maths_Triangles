@@ -1,9 +1,4 @@
 #include "Point.h"
-// GLEW
-#define GLEW_STATIC
-#include <GL/glew.h>
-// GLFW
-#include <GLFW/glfw3.h>
 
 
 Point::Point(float x, float y)
@@ -12,27 +7,23 @@ Point::Point(float x, float y)
 	this->y = y;
 }
 
-
-void Point::draw()
+void Point::calcAngleFromBary(float xBarycentre, float yBarycentre)
 {
-	glVertex2d(this->x, this->y);
+	float vX = this->x - xBarycentre, vY = this->y - yBarycentre;
+	this->angleFromBary = atan2(vY, vX) - atan2(0.0, 1.0f);
 }
 
-
-void Point::getVertices(GLfloat* vertices, int* index)
+const float Point::getAngleFromBary() const
 {
-	vertices[*index] = this->x;
-	vertices[(*index) + 1] = this->y;
-	vertices[(*index) + 2] = 0.0f;
-	(*index) = (*index) + 3;
+	return this->angleFromBary;
 }
 
-float Point::getX()
+const float Point::getX() const
 {
 	return this->x;
 }
 
-float Point::getY()
+const float Point::getY() const
 {
 	return this->y;
 }
