@@ -226,7 +226,10 @@ void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int
 	usedEdges.push_back(e2);
 	eboIndices.push_back(indice1);
 	eboIndices.push_back(indice2);
+	eboIndices.push_back(indice2);
 	eboIndices.push_back(indice3);
+	eboIndices.push_back(indice3);
+	eboIndices.push_back(indice1);
 }
 
 unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned short>& eboIndices)
@@ -234,13 +237,13 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 	std::sort(points.begin(), points.end(), cmpPointsAbsAndOrd);
 	
 	StatesimpleTriangulation state = INIT_FRIST_POINT;
+	Triangle* temp = new Triangle();
 	int currentIndice = 0;
 	std::vector<UsedEdge> usedEdges, oldUsedEdges;
 	for each (auto point in points)
 	{
 		vboCoords.push_back(point->getX());
 		vboCoords.push_back(point->getY());
-		vboCoords.push_back(1.0);
 		if (currentIndice > 2)
 		{
 			oldUsedEdges.clear();

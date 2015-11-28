@@ -1,6 +1,12 @@
 #include "Triangle.h"
 
 
+Triangle::Triangle()
+{
+	this->indice1 = 0;
+	this->indice2 = 0;
+	this->indice3 = 0;
+}
 Triangle::Triangle(unsigned short indice1, unsigned short indice2, unsigned short indice3)
 {
 	this->indice1 = indice1;
@@ -14,7 +20,29 @@ void Triangle::setIndices(unsigned short indice1, unsigned short indice2, unsign
 	this->indice2 = indice2;
 	this->indice3 = indice3;
 }
+void Triangle::setIndice1(unsigned short indice1)
+{
+	this->indice1 = indice1;
+}
+void Triangle::setIndice2(unsigned short indice2)
+{
+	this->indice2 = indice2;
+}
+void Triangle::setIndice3(unsigned short indice3)
+{
+	this->indice3 = indice3;
+}
 
+
+void Triangle::addIndice(unsigned short indice)
+{
+	if (this->indice1 == 0)
+		this->indice1 = indice1;
+	else if (this->indice2 == 0)
+		this->indice2 = indice2;
+	else if (this->indice3 == 0)
+		this->indice3 = indice3;
+}
 
 unsigned short Triangle::getIndice1()
 {
