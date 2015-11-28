@@ -29,7 +29,7 @@ void Scene::getJarvisEnveloppes(std::vector<float>& vboCoords, std::vector<unsig
 	}
 }
 
-void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned short>& indices, std::vector<unsigned short>& sizeObjects)
+void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, std::vector<unsigned short>& sizeObjects)
 {
 	auto currentObject = objects.begin();
 	while (currentObject != objects.end())

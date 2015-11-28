@@ -209,7 +209,7 @@ float calcAngle(std::shared_ptr<Point> A, std::shared_ptr<Point> B, std::shared_
 	return angle;
 }
 
-void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned short>& eboIndices)
+void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned int>& eboIndices)
 {
 	UsedEdge e1, e2, e3;
 	e1.v1 = indice1;
@@ -229,18 +229,19 @@ void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int
 	eboIndices.push_back(indice3);
 }
 
-unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned short>& eboIndices)
+unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices)
 {
 	std::sort(points.begin(), points.end(), cmpPointsAbsAndOrd);
 	
 	StatesimpleTriangulation state = INIT_FRIST_POINT;
 	int currentIndice = 0;
 	std::vector<UsedEdge> usedEdges, oldUsedEdges;
+	bool found = false;
 	for each (auto point in points)
 	{
 		vboCoords.push_back(point->getX());
 		vboCoords.push_back(point->getY());
-		vboCoords.push_back(1.0);
+		vboCoords.push_back(1.0f);
 		if (currentIndice > 2)
 		{
 			oldUsedEdges.clear();
@@ -250,10 +251,21 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 			}
 			for each (auto edge in oldUsedEdges)
 			{
+				found = false;
 				if (calcAngle(points.at(edge.v1), points.at(edge.v2), point) < 0 != edge.side)
 				{
-					addUsedEdgesToVector(usedEdges, edge.v1, edge.v2, currentIndice, eboIndices);
+					for each (auto edge2 in oldUsedEdges)
+					{
+						if (edge2.v1 == edge.v1 && edge2.v2 == edge.v2 && calcAngle(points.at(edge2.v1), points.at(edge2.v2), point) < 0 == edge2.side)
+						{
+							found = true;
+						}
+					}
 				}
+				else
+					found = true;
+				if (!found)
+					addUsedEdgesToVector(usedEdges, edge.v1, edge.v2, currentIndice, eboIndices);
 			}
 		}
 		else if (currentIndice == 2)

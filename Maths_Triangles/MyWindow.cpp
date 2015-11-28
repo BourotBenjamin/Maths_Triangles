@@ -73,6 +73,7 @@ int window_mainLoop(GLFWwindow* openGLWindow)
         ourShader.Use();
 		glBindVertexArray(VAO_POINTS);
 		glDrawElements(GL_TRIANGLES, eboIndices.size(), GL_UNSIGNED_INT, 0);
+		//glBindVertexArray(0);
 		//glDrawArrays(GL_TRIANGLES, 0, eboIndices.size());
 		/*
 		unsigned short currentSize = pSize;
@@ -102,7 +103,7 @@ void updateVBO()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_POINTS);
 	glBufferData(GL_ARRAY_BUFFER, vboCoords.size() * sizeof(GLfloat) , vboCoords.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned short), eboIndices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
 }
 
 

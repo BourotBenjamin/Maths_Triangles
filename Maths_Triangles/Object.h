@@ -19,8 +19,8 @@ public:
 	unsigned short Object::getPoints(std::vector<float>& vboCoords);
 	unsigned short getEnveloppeJarvis(std::vector<float>& vboCoords);
 	unsigned short getEnveloppeGrahamScan(std::vector<float>& vboCoords);
-	void addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned short>& eboIndices);
-	unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned short>& vboIndices);
+	void addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned int>& eboIndices);
+	unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices);
 	~Object();
 private:
 	std::vector<std::shared_ptr<Triangle>> triangles;

@@ -7,7 +7,7 @@ public:
     std::shared_ptr<Point> getNearestPoint(float x, float y);
 	unsigned short Scene::getPoints(std::vector<float>& vboCoords);
 	void getJarvisEnveloppes(std::vector<float>& vboCoords, std::vector<unsigned short>& sizesEnveloppes);
-	void simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned short>& indices, std::vector<unsigned short>& sizeObjects);
+	void simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, std::vector<unsigned short>& sizeObjects);
 	~Scene();
 private:
 	std::vector<std::shared_ptr<Object>> objects;
