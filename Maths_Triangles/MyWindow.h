@@ -19,6 +19,12 @@
 GLFWwindow* openGLWindow;
 const GLuint WIDTH = 800, HEIGHT = 600;
 
+enum Mode {
+	ENVELOPPE_JARVIS,
+	ENVELOPPE_GRAHAM_SCAN,
+	TRIANGULATION
+};
+
 int window_init();
 void updateVBO();
 void window_fillVBOPointsClicked();
@@ -33,6 +39,8 @@ std::shared_ptr<Object> o;
 Scene scene;
 GLuint VBO, VBO_POINTS, EBO_POINTS;
 int pSize;
+Mode currentMode = ENVELOPPE_JARVIS;
 std::vector<unsigned short> enveloppesSizes;
+
 
 #endif

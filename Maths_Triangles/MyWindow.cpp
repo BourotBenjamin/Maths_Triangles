@@ -72,16 +72,22 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 		glClear(GL_COLOR_BUFFER_BIT);
         ourShader.Use();
 		glBindVertexArray(VAO_POINTS);
-		glDrawElements(GL_TRIANGLES, eboIndices.size(), GL_UNSIGNED_INT, 0);
-		//glBindVertexArray(0);
-		//glDrawArrays(GL_TRIANGLES, 0, eboIndices.size());
-		/*
 		unsigned short currentSize = pSize;
-		for each (unsigned short size in enveloppesSizes)
+		switch (currentMode)
 		{
-			glDrawArrays(GL_LINE_STRIP, currentSize, size);
-			currentSize += size;
-		}*/
+		case ENVELOPPE_JARVIS:
+		case ENVELOPPE_GRAHAM_SCAN:
+			glDrawArrays(GL_POINTS, 0, pSize);
+			for each (unsigned short size in enveloppesSizes)
+			{
+				glDrawArrays(GL_LINE_STRIP, currentSize, size);
+				currentSize += size;
+			}
+			break;
+		case TRIANGULATION:
+			glDrawElements(GL_TRIANGLES, eboIndices.size(), GL_UNSIGNED_INT, 0);
+			break;
+		}
 		glfwSwapBuffers(openGLWindow);
 	}
 
@@ -97,13 +103,24 @@ void updateVBO()
 	vboCoords.clear();
 	eboIndices.clear();
 	enveloppesSizes.clear();
-	//pSize = scene.getPoints(vboCoords);
-	//scene.getJarvisEnveloppes(vboCoords, enveloppesSizes);
-	scene.simpleTriangulation(vboCoords, eboIndices, enveloppesSizes);
+	switch (currentMode)
+	{
+	case ENVELOPPE_JARVIS:
+		pSize = scene.getPoints(vboCoords);
+		scene.getJarvisEnveloppes(vboCoords, enveloppesSizes);
+		break;
+	case ENVELOPPE_GRAHAM_SCAN:
+		pSize = scene.getPoints(vboCoords);
+		scene.getGrahamScanEnveloppes(vboCoords, enveloppesSizes);
+		break;
+	case TRIANGULATION:
+		scene.simpleTriangulation(vboCoords, eboIndices, enveloppesSizes);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
+		break;
+	}
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_POINTS);
-	glBufferData(GL_ARRAY_BUFFER, vboCoords.size() * sizeof(GLfloat) , vboCoords.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vboCoords.size() * sizeof(GLfloat), vboCoords.data(), GL_STATIC_DRAW);
 }
 
 
@@ -126,12 +143,30 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 {
 	// When a user presses the escape key, we set the WindowShouldClose property to true, 
 	// closing the application
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(activeWindow, GL_TRUE);
-	if (key == GLFW_KEY_N && action == GLFW_PRESS)
-    {
-		o = std::shared_ptr<Object>(new Object());
-		scene.addObject(o);
+	if (action == GLFW_PRESS)
+	{
+		switch (key)
+		{
+		case GLFW_KEY_ESCAPE:
+			glfwSetWindowShouldClose(activeWindow, GL_TRUE);
+			break;
+		case GLFW_KEY_N:
+			o = std::shared_ptr<Object>(new Object());
+			scene.addObject(o);
+			break;
+		case GLFW_KEY_KP_1:
+			currentMode = ENVELOPPE_JARVIS;
+			updateVBO();
+			break;
+		case GLFW_KEY_KP_2:
+			currentMode = ENVELOPPE_GRAHAM_SCAN;
+			updateVBO();
+			break;
+		case GLFW_KEY_KP_3:
+			currentMode = TRIANGULATION;
+			updateVBO();
+			break;
+		}
 	}
     
     
