@@ -218,12 +218,12 @@ void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int
 	usedEdges.push_back(e1);
 	e2.v1 = indice2;
 	e2.v2 = indice3;
-	e2.side = ((calcAngle(points.at(indice3), points.at(indice1), points.at(indice2))) < 0);
-	usedEdges.push_back(e2);
-	e2.v1 = indice3;
-	e2.v2 = indice1;
 	e2.side = ((calcAngle(points.at(indice2), points.at(indice3), points.at(indice1))) < 0);
 	usedEdges.push_back(e2);
+	e3.v1 = indice3;
+	e3.v2 = indice1;
+	e3.side = ((calcAngle(points.at(indice3), points.at(indice1), points.at(indice2))) < 0);
+	usedEdges.push_back(e3);
 	eboIndices.push_back(indice1);
 	eboIndices.push_back(indice2);
 	eboIndices.push_back(indice3);
@@ -257,6 +257,10 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 					for each (auto edge2 in oldUsedEdges)
 					{
 						if (edge2.v1 == edge.v1 && edge2.v2 == edge.v2 && calcAngle(points.at(edge2.v1), points.at(edge2.v2), point) < 0 == edge2.side)
+						{
+							found = true;
+						}
+						if (edge2.v1 == edge.v2 && edge2.v2 == edge.v1 &&  edge.side == edge2.side)
 						{
 							found = true;
 						}
