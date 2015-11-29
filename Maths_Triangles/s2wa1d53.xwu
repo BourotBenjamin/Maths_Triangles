@@ -14,7 +14,7 @@ public:
 	unsigned short getIndice1();
 	unsigned short getIndice2();
 	unsigned short getIndice3();
-	void addIndice(unsigned short indice);
+	void addIndice(unsigned short indice)
 	~Triangle();
 private:
 	unsigned short indice1, indice2, indice3;

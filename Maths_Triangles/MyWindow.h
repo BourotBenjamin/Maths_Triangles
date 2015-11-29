@@ -27,10 +27,11 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods);
 
 std::vector<float> vboCoords;
+std::vector<unsigned int> eboIndices;
 std::shared_ptr<Point> p1, p2;
 std::shared_ptr<Object> o;
 Scene scene;
-GLuint VBO, VBO_POINTS;
+GLuint VBO, VBO_POINTS, EBO_POINTS;
 int pSize;
 std::vector<unsigned short> enveloppesSizes;
 

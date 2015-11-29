@@ -52,6 +52,7 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 	GLuint VAO_POINTS;
 	glGenVertexArrays(1, &VAO_POINTS);
 	glGenBuffers(1, &VBO_POINTS);
+	glGenBuffers(1, &EBO_POINTS);
 	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
 	glBindVertexArray(VAO_POINTS);
 	updateVBO();
@@ -62,6 +63,7 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 
 	glBindVertexArray(0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(openGLWindow))
 	{
@@ -70,18 +72,22 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 		glClear(GL_COLOR_BUFFER_BIT);
         ourShader.Use();
 		glBindVertexArray(VAO_POINTS);
-		glDrawArrays(GL_POINTS, 0, pSize);
+		glDrawElements(GL_TRIANGLES, eboIndices.size(), GL_UNSIGNED_INT, 0);
+		//glBindVertexArray(0);
+		//glDrawArrays(GL_TRIANGLES, 0, eboIndices.size());
+		/*
 		unsigned short currentSize = pSize;
 		for each (unsigned short size in enveloppesSizes)
 		{
 			glDrawArrays(GL_LINE_STRIP, currentSize, size);
 			currentSize += size;
-		}
+		}*/
 		glfwSwapBuffers(openGLWindow);
 	}
 
 	glDeleteVertexArrays(1, &VAO_POINTS);
 	glDeleteBuffers(1, &VBO_POINTS);
+	glDeleteBuffers(1, &EBO_POINTS);
 	glfwTerminate();
 	return 0;
 }
@@ -89,11 +95,15 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 void updateVBO()
 {
 	vboCoords.clear();
+	eboIndices.clear();
 	enveloppesSizes.clear();
-	pSize = scene.getPoints(vboCoords);
-	scene.getJarvisEnveloppes(vboCoords, enveloppesSizes);
+	//pSize = scene.getPoints(vboCoords);
+	//scene.getJarvisEnveloppes(vboCoords, enveloppesSizes);
+	scene.simpleTriangulation(vboCoords, eboIndices, enveloppesSizes);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_POINTS);
 	glBufferData(GL_ARRAY_BUFFER, vboCoords.size() * sizeof(GLfloat) , vboCoords.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
 }
 
 
