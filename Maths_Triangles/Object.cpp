@@ -242,6 +242,7 @@ Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b
 
 void Object::flipping()
 {
+	bool changed = false;
 	std::vector<std::shared_ptr<Triangle>> newTrList;
 	for each (auto triangle in triangles)
 	{
@@ -293,6 +294,7 @@ void Object::flipping()
 						triangle2->removed = true;
 						newTrList.push_back(std::shared_ptr<Triangle>(new Triangle(p3, p1, i)));
 						newTrList.push_back(std::shared_ptr<Triangle>(new Triangle(p3, p2, i)));
+						changed = true;
 					}
 				}
 			}
@@ -309,6 +311,8 @@ void Object::flipping()
 	{
 		triangles.push_back(t);
 	}
+	if (changed)
+		this->flipping();
 }
 
 unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping)
