@@ -8,7 +8,7 @@ public:
 	unsigned short Scene::getPoints(std::vector<float>& vboCoords);
 	void getJarvisEnveloppes(std::vector<float>& vboCoords, std::vector<unsigned short>& sizesEnveloppes);
 	void getGrahamScanEnveloppes(std::vector<float>& vboCoords, std::vector<unsigned short>& sizesEnveloppes);
-	void simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, std::vector<unsigned short>& sizeObjects);
+	void simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, bool flipping);
 	~Scene();
 private:
 	std::vector<std::shared_ptr<Object>> objects;

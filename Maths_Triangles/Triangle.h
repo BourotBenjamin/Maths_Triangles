@@ -5,6 +5,7 @@
 class Triangle
 {
 public:
+	bool removed = false;
 	Triangle();
 	Triangle(unsigned short indice1, unsigned short indice2, unsigned short indice3);
 	void setIndices(unsigned short indice1, unsigned short indice2, unsigned short indice3);

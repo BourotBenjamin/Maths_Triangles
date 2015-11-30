@@ -224,13 +224,96 @@ void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int
 	e3.v2 = indice1;
 	e3.side = ((calcAngle(points.at(indice3), points.at(indice1), points.at(indice2))) < 0);
 	usedEdges.push_back(e3);
-	eboIndices.push_back(indice1);
-	eboIndices.push_back(indice2);
-	eboIndices.push_back(indice3);
+	triangles.push_back(std::shared_ptr<Triangle>(new Triangle(indice1, indice2, indice3)));
 }
 
-unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices)
+Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
 {
+	Circle circle;
+	float aX = a->getX(), aY = a->getY(), bX = b->getX(), bY = b->getY(), cX = c->getX(), cY = c->getY();
+	float D = 2 * (aX  * (bY - cY) + bX * (cY - aY) + cX * (aY - bY));
+	circle.x = (((aX * aX) + (aY * aY)) * (bY - cY) + ((bX * bX) + (bY * bY)) * (cY - aY) + ((cX * cX) + (cY * cY)) * (aY - bY)) / D;
+	circle.y = (((aX * aX) + (aY * aY)) * (cX - bX) + ((bX * bX) + (bY * bY)) * (aX - cX) + ((cX * cX) + (cY * cY)) * (bX - aX)) / D;
+	circle.r = sqrt((bX - circle.x) * (bX - circle.x) + (bY - circle.y) * (bY - circle.y));
+	return circle;
+}
+
+
+
+void Object::flipping()
+{
+	std::vector<std::shared_ptr<Triangle>> newTrList;
+	for each (auto triangle in triangles)
+	{
+		unsigned int i1 = triangle->getIndice1(), i2 = triangle->getIndice2(), i3 = triangle->getIndice3();
+		Circle c = circumsedCircleconst(points.at(i1), points.at(i2), points.at(i3));
+		int i = 0;
+		for each (auto point in points)
+		{
+			if (i != i1 && i != i2 && i != i3 && ( sqrt((c.x - point->getX()) * (c.x - point->getX()) + (c.y - point->getY()) * (c.y - point->getY())) <= c.r ) )
+			{
+				for each (auto triangle2 in triangles)
+				{
+					unsigned int iT1 = triangle2->getIndice1(), iT2 = triangle2->getIndice2(), iT3 = triangle2->getIndice3();
+					unsigned int p1, p2, p3;
+					bool found = false;
+					if (iT1 == i || iT2 == i || iT3 == i)
+					{
+						if (iT1 == i1 || iT2 == i1 || iT3 == i1)
+						{
+							if (iT1 == i2 || iT2 == i2 || iT3 == i2)
+							{
+								found = true;
+								p1 = i1;
+								p2 = i2;
+								p3 = i3;
+							}
+							else if (iT1 == i3 || iT2 == i3 || iT3 == i3)
+							{
+								found = true;
+								p1 = i1;
+								p2 = i3;
+								p3 = i2;
+							}
+						}
+						else if (iT1 == i2 || iT2 == i2 || iT3 == i2)
+						{
+							if (iT1 == i3 || iT2 == i3 || iT3 == i3)
+							{
+								found = true;
+								p1 = i2;
+								p2 = i3;
+								p3 = i1;
+							}
+						}
+					}
+					if (found && !triangle->removed && !triangle2->removed)
+					{
+						triangle->removed = true;
+						triangle2->removed = true;
+						newTrList.push_back(std::shared_ptr<Triangle>(new Triangle(p3, p1, i)));
+						newTrList.push_back(std::shared_ptr<Triangle>(new Triangle(p3, p2, i)));
+					}
+				}
+			}
+			i++;
+		}
+	}
+	for each (auto t in triangles)
+	{
+		if (!t->removed)
+			newTrList.push_back(t);
+	}
+	triangles.clear();
+	for each (auto t in newTrList)
+	{
+		triangles.push_back(t);
+	}
+}
+
+unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping)
+{
+	triangles.clear();
 	std::sort(points.begin(), points.end(), cmpPointsAbsAndOrd);
 	
 	StatesimpleTriangulation state = INIT_FRIST_POINT;
@@ -277,6 +360,14 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 			addUsedEdgesToVector(usedEdges, 0, 1, 2, eboIndices);
 		}
 		currentIndice++;
+	}
+	if (flipping)
+		this->flipping();
+	for each (auto triangle in triangles)
+	{
+		eboIndices.push_back(triangle->getIndice1());
+		eboIndices.push_back(triangle->getIndice2());
+		eboIndices.push_back(triangle->getIndice3());
 	}
 	return eboIndices.size();
 }

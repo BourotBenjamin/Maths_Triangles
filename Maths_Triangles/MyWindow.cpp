@@ -85,6 +85,7 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 			}
 			break;
 		case TRIANGULATION:
+		case TRIANGULATION_WITH_FLIPPING:
 			glDrawElements(GL_TRIANGLES, eboIndices.size(), GL_UNSIGNED_INT, 0);
 			break;
 		}
@@ -114,7 +115,12 @@ void updateVBO()
 		scene.getGrahamScanEnveloppes(vboCoords, enveloppesSizes);
 		break;
 	case TRIANGULATION:
-		scene.simpleTriangulation(vboCoords, eboIndices, enveloppesSizes);
+		scene.simpleTriangulation(vboCoords, eboIndices, false);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
+		break;
+	case TRIANGULATION_WITH_FLIPPING:
+		scene.simpleTriangulation(vboCoords, eboIndices, true);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
 		break;
@@ -164,6 +170,10 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 			break;
 		case GLFW_KEY_KP_3:
 			currentMode = TRIANGULATION;
+			updateVBO();
+			break;
+		case GLFW_KEY_KP_4:
+			currentMode = TRIANGULATION_WITH_FLIPPING;
 			updateVBO();
 			break;
 		}

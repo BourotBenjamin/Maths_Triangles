@@ -8,6 +8,10 @@ struct UsedEdge
 	unsigned int v2;
 	bool side;
 };
+struct Circle
+{
+	float x, y, r;
+};
 
 class Object
 {
@@ -20,7 +24,8 @@ public:
 	unsigned short getEnveloppeJarvis(std::vector<float>& vboCoords);
 	unsigned short getEnveloppeGrahamScan(std::vector<float>& vboCoords);
 	void addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned int>& eboIndices);
-	unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices);
+	unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping);
+	void Object::flipping();
 	~Object();
 private:
 	std::vector<std::shared_ptr<Triangle>> triangles;

@@ -38,12 +38,12 @@ void Scene::getGrahamScanEnveloppes(std::vector<float>& vboCoords, std::vector<u
 	}
 }
 
-void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, std::vector<unsigned short>& sizeObjects)
+void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, bool flipping)
 {
 	auto currentObject = objects.begin();
 	while (currentObject != objects.end())
 	{
-		(*currentObject)->simpleTriangulation(vboCoords, indices);
+		(*currentObject)->simpleTriangulation(vboCoords, indices, flipping);
 		currentObject++;
 	}
 }
