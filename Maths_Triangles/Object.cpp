@@ -75,13 +75,11 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 		vboCoords.push_back(first->getX());
 		vboCoords.push_back(first->getY());
 		vboCoords.push_back(1.0f);
-		bool isFirst = true;
 		std::shared_ptr<Point> lastP = std::shared_ptr<Point>(new Point(first->getX(), 0.0f)), current = first, best = nullptr;
 		float angle = 0.0f, bestAngle = 0.0f;
-		while (isFirst || *current != *first)
+		do
 		{
 			bestAngle = 0.0f;
-			isFirst = false;
 			float v1X = current->getX() - lastP->getX(), v1Y = current->getY() - lastP->getY(), v2X = 0.0f, v2Y = 0.0f;
 			float l1 = sqrt(v1X*v1X + v1Y*v1Y), l2 = 0.0;
 			auto ptr = points.begin();
@@ -106,7 +104,7 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 			vboCoords.push_back(best->getX());
 			vboCoords.push_back(best->getY());
 			vboCoords.push_back(1.0f);
-		}
+		} while (*current != *first);
 		return enveloppe.size();
 	}
 	return 0;
