@@ -57,8 +57,10 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 	glBindVertexArray(VAO_POINTS);
 	updateVBO();
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 
@@ -68,7 +70,7 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 	while (!glfwWindowShouldClose(openGLWindow))
 	{
 		glfwPollEvents();
-		glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
         ourShader.Use();
 		glBindVertexArray(VAO_POINTS);
@@ -88,6 +90,17 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 		case TRIANGULATION_WITH_FLIPPING:
 			glDrawElements(GL_TRIANGLES, eboIndices.size(), GL_UNSIGNED_INT, 0);
 			break;
+		case TRIANGULATION_WITH_VORONOI:
+			glDrawElements(GL_TRIANGLES, eboIndices.size(), GL_UNSIGNED_INT, 0);
+			auto voronoiSizePtr = voronoisSizes.begin();
+			auto beforeVoronoiSizePtr = triangulationsSizes.begin();
+			while (voronoiSizePtr != voronoisSizes.end())
+			{
+				glDrawArrays(GL_LINES, *beforeVoronoiSizePtr, *voronoiSizePtr);
+				voronoiSizePtr++;
+				beforeVoronoiSizePtr++;
+			}
+			break;
 		}
 		glfwSwapBuffers(openGLWindow);
 	}
@@ -102,8 +115,11 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 void updateVBO()
 {
 	vboCoords.clear();
+	vboVoronoi.clear();
 	eboIndices.clear();
 	enveloppesSizes.clear();
+	triangulationsSizes.clear();
+	voronoisSizes.clear();
 	switch (currentMode)
 	{
 	case ENVELOPPE_JARVIS:
@@ -115,12 +131,17 @@ void updateVBO()
 		scene.getGrahamScanEnveloppes(vboCoords, enveloppesSizes);
 		break;
 	case TRIANGULATION:
-		scene.simpleTriangulation(vboCoords, eboIndices, false);
+		scene.simpleTriangulation(vboCoords, eboIndices, false, false, triangulationsSizes, voronoisSizes);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
 		break;
 	case TRIANGULATION_WITH_FLIPPING:
-		scene.simpleTriangulation(vboCoords, eboIndices, true);
+		scene.simpleTriangulation(vboCoords, eboIndices, true, false, triangulationsSizes, voronoisSizes);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
+		break;
+	case TRIANGULATION_WITH_VORONOI:
+		scene.simpleTriangulation(vboCoords, eboIndices, true, true, triangulationsSizes, voronoisSizes);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_POINTS);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboIndices.size() * sizeof(unsigned int), eboIndices.data(), GL_STATIC_DRAW);
 		break;
@@ -174,6 +195,10 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 			break;
 		case GLFW_KEY_KP_4:
 			currentMode = TRIANGULATION_WITH_FLIPPING;
+			updateVBO();
+			break;
+		case GLFW_KEY_KP_5:
+			currentMode = TRIANGULATION_WITH_VORONOI;
 			updateVBO();
 			break;
 		}

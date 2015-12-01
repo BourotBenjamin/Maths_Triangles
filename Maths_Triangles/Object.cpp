@@ -46,6 +46,9 @@ unsigned short Object::getPoints(std::vector<float>& vboCoords)
 		vboCoords.push_back((*ptr)->getX());
 		vboCoords.push_back((*ptr)->getY());
 		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
 		i++;
 		ptr++;
 	}
@@ -75,6 +78,9 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 		vboCoords.push_back(first->getX());
 		vboCoords.push_back(first->getY());
 		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
 		std::shared_ptr<Point> lastP = std::shared_ptr<Point>(new Point(first->getX(), 0.0f)), current = first, best = nullptr;
 		float angle = 0.0f, bestAngle = 0.0f;
 		do
@@ -103,6 +109,9 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 			enveloppe.push_back(best);
 			vboCoords.push_back(best->getX());
 			vboCoords.push_back(best->getY());
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
 			vboCoords.push_back(1.0f);
 		} while (*current != *first);
 		return enveloppe.size();
@@ -177,11 +186,17 @@ unsigned short Object::getEnveloppeGrahamScan(std::vector<float>& vboCoords)
 			vboCoords.push_back((*ptr)->getX());
 			vboCoords.push_back((*ptr)->getY());
 			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
 			ptr++;
 		}
 		ptr = enveloppe.begin();
 		vboCoords.push_back((*ptr)->getX());
 		vboCoords.push_back((*ptr)->getY());
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
 		vboCoords.push_back(1.0f);
 		return enveloppe.size() + 1;
 	}
@@ -207,22 +222,54 @@ float calcAngle(std::shared_ptr<Point> A, std::shared_ptr<Point> B, std::shared_
 	return angle;
 }
 
-void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned int>& eboIndices)
+std::shared_ptr<UsedEdge> Object::findEdgeInUsedEdges(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2)
 {
-	UsedEdge e1, e2, e3;
-	e1.v1 = indice1;
-	e1.v2 = indice2;
-	e1.side = ((calcAngle(points.at(indice1), points.at(indice2), points.at(indice3))) < 0);
-	usedEdges.push_back(e1);
-	e2.v1 = indice2;
-	e2.v2 = indice3;
-	e2.side = ((calcAngle(points.at(indice2), points.at(indice3), points.at(indice1))) < 0);
-	usedEdges.push_back(e2);
-	e3.v1 = indice3;
-	e3.v2 = indice1;
-	e3.side = ((calcAngle(points.at(indice3), points.at(indice1), points.at(indice2))) < 0);
-	usedEdges.push_back(e3);
-	triangles.push_back(std::shared_ptr<Triangle>(new Triangle(indice1, indice2, indice3)));
+	for each (auto e in usedEdges)
+	{
+		if ((e->v1 == indice1 && e->v2 == indice2) || (e->v2 == indice1 && e->v1 == indice2))
+			return e;
+	}
+	return nullptr;
+}
+
+std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::shared_ptr<Triangle> triangle)
+{
+	std::shared_ptr<UsedEdge> e = std::shared_ptr<UsedEdge>(new UsedEdge());
+	e->v1 = indice1;
+	e->v2 = indice2;
+	if (((calcAngle(points.at(indice1), points.at(indice2), points.at(indice3))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	usedEdges.push_back(e);
+	return e;
+}
+
+void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3)
+{
+	std::shared_ptr<Triangle> triangle(new Triangle(indice1, indice2, indice3));
+	std::shared_ptr<UsedEdge> e = findEdgeInUsedEdges(usedEdges, indice1, indice2);
+	if (e == nullptr)
+		e = addEdge(usedEdges, indice1, indice2, indice3, triangle);
+	else if (((calcAngle(points.at(e->v1), points.at(e->v2), points.at(indice3))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	e = findEdgeInUsedEdges(usedEdges, indice2, indice3);
+	if (e == nullptr)
+		e = addEdge(usedEdges, indice2, indice3, indice1, triangle);
+	else if (((calcAngle(points.at(e->v1), points.at(e->v2), points.at(indice1))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	e = findEdgeInUsedEdges(usedEdges, indice3, indice1);
+	if (e == nullptr)
+		e = addEdge(usedEdges, indice3, indice1, indice2, triangle);
+	else if (((calcAngle(points.at(e->v1), points.at(e->v2), points.at(indice2))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	triangles.push_back(triangle);
 }
 
 Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
@@ -236,9 +283,19 @@ Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b
 	return circle;
 }
 
+Circle baryCentre(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
+{
+	Circle circle;
+	float aX = a->getX(), aY = a->getY(), bX = b->getX(), bY = b->getY(), cX = c->getX(), cY = c->getY();
+	circle.x = (aX + bX + cX) / 3;
+	circle.y = (aY + bY + cY) / 3;
+	circle.r = 0;
+	return circle;
+}
 
 
-void Object::flipping()
+
+void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 {
 	bool changed = false;
 	std::vector<std::shared_ptr<Triangle>> newTrList;
@@ -305,73 +362,91 @@ void Object::flipping()
 			newTrList.push_back(t);
 	}
 	triangles.clear();
+	usedEdges.clear();
 	for each (auto t in newTrList)
 	{
 		triangles.push_back(t);
+		addUsedEdgesToVector(usedEdges, t->getIndice1(), t->getIndice2(), t->getIndice3());
 	}
 	if (changed)
-		this->flipping();
+		this->flipping(usedEdges);
 }
 
-unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping)
+unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi)
 {
 	triangles.clear();
 	std::sort(points.begin(), points.end(), cmpPointsAbsAndOrd);
 	
 	StatesimpleTriangulation state = INIT_FRIST_POINT;
 	int currentIndice = 0;
-	std::vector<UsedEdge> usedEdges, oldUsedEdges;
+	std::vector<std::shared_ptr<UsedEdge>> usedEdges, oldUsedEdges;
 	bool found = false;
 	for each (auto point in points)
 	{
 		vboCoords.push_back(point->getX());
 		vboCoords.push_back(point->getY());
 		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
+		vboCoords.push_back(1.0f);
 		if (currentIndice > 2)
 		{
 			oldUsedEdges.clear();
 			for each (auto edge in usedEdges)
-			{
 				oldUsedEdges.push_back(edge);
-			}
 			for each (auto edge in oldUsedEdges)
 			{
 				found = false;
-				if (calcAngle(points.at(edge.v1), points.at(edge.v2), point) < 0 != edge.side)
-				{
-					for each (auto edge2 in oldUsedEdges)
-					{
-						if (edge2.v1 == edge.v1 && edge2.v2 == edge.v2 && calcAngle(points.at(edge2.v1), points.at(edge2.v2), point) < 0 == edge2.side)
-						{
-							found = true;
-						}
-						if (edge2.v1 == edge.v2 && edge2.v2 == edge.v1 &&  edge.side == edge2.side)
-						{
-							found = true;
-						}
-					}
-				}
-				else
+				float angle = calcAngle(points.at(edge->v1), points.at(edge->v2), point);
+				if ( angle < 0 && edge->t1 != nullptr)
+					found = true;
+				else if(angle >= 0 && edge->t2 != nullptr)
 					found = true;
 				if (!found)
-					addUsedEdgesToVector(usedEdges, edge.v1, edge.v2, currentIndice, eboIndices);
+					addUsedEdgesToVector(usedEdges, edge->v1, edge->v2, currentIndice);
 			}
 		}
 		else if (currentIndice == 2)
-		{
-			addUsedEdgesToVector(usedEdges, 0, 1, 2, eboIndices);
-		}
+			addUsedEdgesToVector(usedEdges, 0, 1, 2);
 		currentIndice++;
 	}
 	if (flipping)
-		this->flipping();
+		this->flipping(usedEdges);
 	for each (auto triangle in triangles)
 	{
 		eboIndices.push_back(triangle->getIndice1());
 		eboIndices.push_back(triangle->getIndice2());
 		eboIndices.push_back(triangle->getIndice3());
 	}
-	return eboIndices.size();
+	int size = 0;
+	if (voronoi)
+	{
+		for each (auto triangle in triangles)
+		{
+			Circle c = circumsedCircleconst(points.at(triangle->getIndice1()), points.at(triangle->getIndice2()), points.at(triangle->getIndice3()));
+			triangle->setCircumCenter(c.x, c.y);
+		}
+		for each (auto edge in usedEdges)
+		{
+			if (edge->t1 != nullptr && edge->t2 != nullptr)
+			{
+				size += 2;
+				vboCoords.push_back(edge->t1->getCircumCenterX());
+				vboCoords.push_back(edge->t1->getCircumCenterY());
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(edge->t2->getCircumCenterX());
+				vboCoords.push_back(edge->t2->getCircumCenterY());
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+			}
+		}
+	}
+	return size;
 }
 
 Object::~Object()
