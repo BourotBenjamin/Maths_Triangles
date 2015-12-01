@@ -207,22 +207,54 @@ float calcAngle(std::shared_ptr<Point> A, std::shared_ptr<Point> B, std::shared_
 	return angle;
 }
 
-void Object::addUsedEdgesToVector(std::vector<UsedEdge>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned int>& eboIndices)
+std::shared_ptr<UsedEdge> Object::findEdgeInUsedEdges(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2)
 {
-	UsedEdge e1, e2, e3;
-	e1.v1 = indice1;
-	e1.v2 = indice2;
-	e1.side = ((calcAngle(points.at(indice1), points.at(indice2), points.at(indice3))) < 0);
-	usedEdges.push_back(e1);
-	e2.v1 = indice2;
-	e2.v2 = indice3;
-	e2.side = ((calcAngle(points.at(indice2), points.at(indice3), points.at(indice1))) < 0);
-	usedEdges.push_back(e2);
-	e3.v1 = indice3;
-	e3.v2 = indice1;
-	e3.side = ((calcAngle(points.at(indice3), points.at(indice1), points.at(indice2))) < 0);
-	usedEdges.push_back(e3);
-	triangles.push_back(std::shared_ptr<Triangle>(new Triangle(indice1, indice2, indice3)));
+	for each (auto e in usedEdges)
+	{
+		if ((e->v1 == indice1 && e->v2 == indice2) || (e->v2 == indice1 && e->v1 == indice2))
+			return e;
+	}
+	return nullptr;
+}
+
+std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::shared_ptr<Triangle> triangle)
+{
+	std::shared_ptr<UsedEdge> e = std::shared_ptr<UsedEdge>(new UsedEdge());
+	e->v1 = indice1;
+	e->v2 = indice2;
+	if (((calcAngle(points.at(indice1), points.at(indice2), points.at(indice3))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	usedEdges.push_back(e);
+	return e;
+}
+
+void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned int>& eboIndices)
+{
+	std::shared_ptr<Triangle> triangle(new Triangle(indice1, indice2, indice3));
+	std::shared_ptr<UsedEdge> e = findEdgeInUsedEdges(usedEdges, indice1, indice2);
+	if (e == nullptr)
+		e = addEdge(usedEdges, indice1, indice2, indice3, triangle);
+	else if (((calcAngle(points.at(e->v1), points.at(e->v2), points.at(indice3))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	e = findEdgeInUsedEdges(usedEdges, indice2, indice3);
+	if (e == nullptr)
+		e = addEdge(usedEdges, indice2, indice3, indice1, triangle);
+	else if (((calcAngle(points.at(e->v1), points.at(e->v2), points.at(indice1))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	e = findEdgeInUsedEdges(usedEdges, indice3, indice1);
+	if (e == nullptr)
+		e = addEdge(usedEdges, indice3, indice1, indice2, triangle);
+	else if (((calcAngle(points.at(e->v1), points.at(e->v2), points.at(indice2))) < 0))
+		e->t1 = triangle;
+	else
+		e->t2 = triangle;
+	triangles.push_back(triangle);
 }
 
 Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
@@ -320,7 +352,7 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 	
 	StatesimpleTriangulation state = INIT_FRIST_POINT;
 	int currentIndice = 0;
-	std::vector<UsedEdge> usedEdges, oldUsedEdges;
+	std::vector<std::shared_ptr<UsedEdge>> usedEdges, oldUsedEdges;
 	bool found = false;
 	for each (auto point in points)
 	{
@@ -331,36 +363,21 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 		{
 			oldUsedEdges.clear();
 			for each (auto edge in usedEdges)
-			{
 				oldUsedEdges.push_back(edge);
-			}
 			for each (auto edge in oldUsedEdges)
 			{
 				found = false;
-				if (calcAngle(points.at(edge.v1), points.at(edge.v2), point) < 0 != edge.side)
-				{
-					for each (auto edge2 in oldUsedEdges)
-					{
-						if (edge2.v1 == edge.v1 && edge2.v2 == edge.v2 && calcAngle(points.at(edge2.v1), points.at(edge2.v2), point) < 0 == edge2.side)
-						{
-							found = true;
-						}
-						if (edge2.v1 == edge.v2 && edge2.v2 == edge.v1 &&  edge.side == edge2.side)
-						{
-							found = true;
-						}
-					}
-				}
-				else
+				float angle = calcAngle(points.at(edge->v1), points.at(edge->v2), point);
+				if ( angle < 0 && edge->t1 != nullptr)
+					found = true;
+				else if(angle >= 0 && edge->t2 != nullptr)
 					found = true;
 				if (!found)
-					addUsedEdgesToVector(usedEdges, edge.v1, edge.v2, currentIndice, eboIndices);
+					addUsedEdgesToVector(usedEdges, edge->v1, edge->v2, currentIndice, eboIndices);
 			}
 		}
 		else if (currentIndice == 2)
-		{
 			addUsedEdgesToVector(usedEdges, 0, 1, 2, eboIndices);
-		}
 		currentIndice++;
 	}
 	if (flipping)
