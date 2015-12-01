@@ -33,6 +33,20 @@ void Triangle::setIndice3(unsigned short indice3)
 	this->indice3 = indice3;
 }
 
+void Triangle::setCircumCenter(float x, float y)
+{
+	this->circumCenterX = x;
+	this->circumCenterY = y;
+}
+float Triangle::getCircumCenterX()
+{
+	return this->circumCenterX;
+}
+float Triangle::getCircumCenterY()
+{
+	return this->circumCenterY;
+}
+
 
 void Triangle::addIndice(unsigned short indice)
 {

@@ -23,7 +23,8 @@ enum Mode {
 	ENVELOPPE_JARVIS,
 	ENVELOPPE_GRAHAM_SCAN,
 	TRIANGULATION,
-	TRIANGULATION_WITH_FLIPPING
+	TRIANGULATION_WITH_FLIPPING,
+	TRIANGULATION_WITH_VORONOI
 };
 
 int window_init();
@@ -33,15 +34,15 @@ int window_mainLoop(GLFWwindow* window, Scene& scene);
 void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int action, int mods);
 void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods);
 
-std::vector<float> vboCoords;
+std::vector<float> vboCoords, vboVoronoi;
 std::vector<unsigned int> eboIndices;
 std::shared_ptr<Point> p1, p2;
 std::shared_ptr<Object> o;
 Scene scene;
-GLuint VBO, VBO_POINTS, EBO_POINTS;
+GLuint VBO_VORONOI, VBO_POINTS, EBO_POINTS;
 int pSize;
 Mode currentMode = ENVELOPPE_JARVIS;
-std::vector<unsigned short> enveloppesSizes;
+std::vector<unsigned short> enveloppesSizes, voronoisSizes, triangulationsSizes;
 
 
 #endif

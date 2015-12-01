@@ -23,9 +23,9 @@ public:
 	unsigned short Object::getPoints(std::vector<float>& vboCoords);
 	unsigned short getEnveloppeJarvis(std::vector<float>& vboCoords);
 	unsigned short getEnveloppeGrahamScan(std::vector<float>& vboCoords);
-	void addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::vector<unsigned int>& eboIndices);
-	unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping);
-	void Object::flipping();
+	void addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3);
+	unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi);
+	void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges);
 	std::shared_ptr<UsedEdge> Object::findEdgeInUsedEdges(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2);
 	std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::shared_ptr<Triangle> triangle);
 	~Object();

@@ -38,12 +38,14 @@ void Scene::getGrahamScanEnveloppes(std::vector<float>& vboCoords, std::vector<u
 	}
 }
 
-void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, bool flipping)
+void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& indices, bool flipping, bool voronoi, std::vector<unsigned short>& triangulationsSize, std::vector<unsigned short>& voronoisSize)
 {
 	auto currentObject = objects.begin();
 	while (currentObject != objects.end())
 	{
-		(*currentObject)->simpleTriangulation(vboCoords, indices, flipping);
+		unsigned short size = ((*currentObject)->simpleTriangulation(vboCoords, indices, flipping, voronoi));
+		voronoisSize.push_back(size);
+		triangulationsSize.push_back((vboCoords.size() / 6) - size);
 		currentObject++;
 	}
 }
