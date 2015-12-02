@@ -245,7 +245,7 @@ std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>
 	return e;
 }
 
-void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, bool addTriangle)
+void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3)
 {
 	std::shared_ptr<Triangle> triangle(new Triangle(indice1, indice2, indice3));
 	std::shared_ptr<UsedEdge> e = findEdgeInUsedEdges(usedEdges, indice1, indice2);
@@ -269,8 +269,7 @@ void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEd
 		e->t1 = triangle;
 	else
 		e->t2 = triangle;
-	if (addTriangle)
-		triangles.push_back(triangle);
+	triangles.push_back(triangle);
 }
 
 Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
@@ -309,8 +308,42 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 	{
 		std::shared_ptr<UsedEdge> edge = usedEdgesCopy.back();
 		usedEdgesCopy.pop_back();
+		if (edge->t1 == nullptr && edge->t2 != nullptr)
+		{
+			for each (auto tr in triangles)
+			{
+				if (tr->removed == false)
+				{
+					unsigned int i1 = tr->getIndice1(), i2 = tr->getIndice2(), i3 = tr->getIndice3(), it1 = edge->t2->getIndice1(), it2 = edge->t2->getIndice2(), it3 = edge->t2->getIndice3();
+					if ((edge->v1 == i1 || edge->v1 == i2 || edge->v1 == i3) && (edge->v2 == i1 || edge->v2 == i2 || edge->v2 == i3) &&
+						((it1 != i1 && it1 != i2 && it1 != i3) || (it2 != i1 && it2 != i2 && it2 != i3) || (it3 != i1 && it3 != i2 && it3 != i3)))
+					{
+						edge->t1 = tr;
+						break;
+					}
+				}
+			}
+		}
+		else if (edge->t1 != nullptr && edge->t2 == nullptr)
+		{
+			for each (auto tr in triangles)
+			{
+				if (tr->removed == false)
+				{
+					unsigned int i1 = tr->getIndice1(), i2 = tr->getIndice2(), i3 = tr->getIndice3(), it1 = edge->t1->getIndice1(), it2 = edge->t1->getIndice2(), it3 = edge->t1->getIndice3();
+					if ((edge->v1 == i1 || edge->v1 == i2 || edge->v1 == i3) && (edge->v2 == i1 || edge->v2 == i2 || edge->v2 == i3) &&
+						((it1 != i1 && it1 != i2 && it1 != i3) || (it2 != i1 && it2 != i2 && it2 != i3) || (it3 != i1 && it3 != i2 && it3 != i3)))
+					{
+						edge->t2 = tr;
+						break;
+					}
+				}
+			}
+		}
 		if (edge->t1 != nullptr && edge->t2 != nullptr)
 		{
+			if (edge->t1->removed || edge->t2->removed)
+				printf("Outch ... :/");
 			unsigned int i1 = edge->t1->getIndice1(), i2 = edge->t1->getIndice2(), i3 = edge->t1->getIndice3(), it1 = edge->t2->getIndice1(), it2 = edge->t2->getIndice2(), it3 = edge->t2->getIndice3();
 			unsigned int p1, p2, p3, a = -1, b = -1, c = -1, d = -1;
 			if (it1 == i1 || it1 == i2 || it1 == i3)
@@ -340,8 +373,8 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 			{
 				edge->t1->removed = true;
 				edge->t2->removed = true;
-				addUsedEdgesToVector(usedEdgesCopy, c, d, a, true);
-				addUsedEdgesToVector(usedEdgesCopy, c, d, b, true);
+				addUsedEdgesToVector(usedEdgesCopy, c, d, a);
+				addUsedEdgesToVector(usedEdgesCopy, c, d, b);
 			}
 		}
 
@@ -356,7 +389,7 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 	usedEdges.clear();
 	for each (auto t in newTrList)
 	{
-		addUsedEdgesToVector(usedEdges, t->getIndice1(), t->getIndice2(), t->getIndice3(), true);
+		addUsedEdgesToVector(usedEdges, t->getIndice1(), t->getIndice2(), t->getIndice3());
 	}
 
 
@@ -455,16 +488,25 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 					else if(angle >= 0 && edge->t2 != nullptr)
 						found = true;
 					if (!found)
-						addUsedEdgesToVector(usedEdges, edge->v1, edge->v2, currentIndice, true);
+						addUsedEdgesToVector(usedEdges, edge->v1, edge->v2, currentIndice);
 				}
 			}
 		}
 		else if (currentIndice == 2)
-			addUsedEdgesToVector(usedEdges, 0, 1, 2, true);
+			addUsedEdgesToVector(usedEdges, 0, 1, 2);
 		currentIndice++;
 	}
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
 	if (flipping)
 		this->flipping(usedEdges);
+	end = std::chrono::system_clock::now();
+
+	int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>
+		(end - start).count();
+	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+	std::cout << "elapsed time: " << elapsed_seconds << "ms\n";
 	for each (auto triangle in triangles)
 	{
 		eboIndices.push_back(triangle->getIndice1());
