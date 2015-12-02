@@ -1,5 +1,8 @@
 #include "Triangle.h"
 #include <algorithm>
+#include <iostream>
+#include <chrono>
+#include <ctime>
 
 
 struct UsedEdge
