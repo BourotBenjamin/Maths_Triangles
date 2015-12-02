@@ -39,6 +39,12 @@ bool Point::operator!=(Point& p)
 	return !this->operator==(p);
 }
 
+
+void Point::addVoronoiEdgeToRegion(std::shared_ptr<VoronoiEdge> edge)
+{
+	region.push_back(edge);
+}
+
 Point::~Point()
 {
 }

@@ -1,6 +1,4 @@
 #include "Point.h"
-#include <vector>
-#include <memory>
 
 class Triangle
 {

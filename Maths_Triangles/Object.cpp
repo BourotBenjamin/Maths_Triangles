@@ -430,6 +430,11 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 		{
 			if (edge->t1 != nullptr && edge->t2 != nullptr)
 			{
+				std::shared_ptr<VoronoiEdge> vEdge = std::shared_ptr<VoronoiEdge>(new VoronoiEdge());
+				vEdge->v1X = edge->t1->getCircumCenterX();
+				vEdge->v2X = edge->t2->getCircumCenterX();
+				vEdge->v1Y = edge->t1->getCircumCenterY();
+				vEdge->v2Y = edge->t2->getCircumCenterY();
 				size += 2;
 				vboCoords.push_back(edge->t1->getCircumCenterX());
 				vboCoords.push_back(edge->t1->getCircumCenterY());
@@ -443,6 +448,44 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
+				points.at(edge->v1)->addVoronoiEdgeToRegion(vEdge);
+				points.at(edge->v2)->addVoronoiEdgeToRegion(vEdge);
+			}
+			else if (edge->t1 != nullptr)
+			{
+				size += 2;
+				vboCoords.push_back(edge->t1->getCircumCenterX());
+				vboCoords.push_back(edge->t1->getCircumCenterY());
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+				float x = points.at(edge->v2)->getX() - points.at(edge->v1)->getX();
+				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
+				vboCoords.push_back(edge->t1->getCircumCenterX() + y);
+				vboCoords.push_back(edge->t1->getCircumCenterY() - x);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+			}
+			else if (edge->t2 != nullptr)
+			{
+				size += 2;
+				vboCoords.push_back(edge->t2->getCircumCenterX());
+				vboCoords.push_back(edge->t2->getCircumCenterY());
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+				float x = points.at(edge->v2)->getX() - points.at(edge->v1)->getX();
+				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
+				vboCoords.push_back(edge->t2->getCircumCenterX() - y);
+				vboCoords.push_back(edge->t2->getCircumCenterY() + x);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
 			}
 		}
 	}
