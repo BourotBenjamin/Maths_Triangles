@@ -245,7 +245,7 @@ std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>
 	return e;
 }
 
-void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3)
+void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, bool addTriangle)
 {
 	std::shared_ptr<Triangle> triangle(new Triangle(indice1, indice2, indice3));
 	std::shared_ptr<UsedEdge> e = findEdgeInUsedEdges(usedEdges, indice1, indice2);
@@ -269,7 +269,8 @@ void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEd
 		e->t1 = triangle;
 	else
 		e->t2 = triangle;
-	triangles.push_back(triangle);
+	if (addTriangle)
+		triangles.push_back(triangle);
 }
 
 Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
@@ -298,7 +299,68 @@ Circle baryCentre(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::sha
 void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 {
 	bool changed = false;
+	std::vector<std::shared_ptr<UsedEdge>> usedEdgesCopy;
 	std::vector<std::shared_ptr<Triangle>> newTrList;
+	for each (auto edge in usedEdges)
+	{
+		usedEdgesCopy.push_back(edge);
+	}
+	while (usedEdgesCopy.size() > 0)
+	{
+		std::shared_ptr<UsedEdge> edge = usedEdgesCopy.back();
+		usedEdgesCopy.pop_back();
+		if (edge->t1 != nullptr && edge->t2 != nullptr)
+		{
+			unsigned int i1 = edge->t1->getIndice1(), i2 = edge->t1->getIndice2(), i3 = edge->t1->getIndice3(), it1 = edge->t2->getIndice1(), it2 = edge->t2->getIndice2(), it3 = edge->t2->getIndice3();
+			unsigned int p1, p2, p3, a = -1, b = -1, c = -1, d = -1;
+			if (it1 == i1 || it1 == i2 || it1 == i3)
+				a = it1;
+			if (it2 == i1 || it2 == i2 || it2 == i3)
+			{
+				if (a == -1)
+					a = it2;
+				else
+					b = it2;
+			}
+			if (it3 == i1 || it3 == i2 || it3 == i3)
+			{
+				if (a == -1)
+					a = it3;
+				else
+					b = it3;
+			}
+			c = (it1 == a || it1 == b) ? ((it2 == a || it2 == b) ? it3 : it2) : it1;
+			d = (i1 == a || i1 == b) ? ((i2 == a || i2 == b) ? i3 : i2) : i1;
+
+
+			Circle circle = circumsedCircleconst(points.at(i1), points.at(i2), points.at(i3)), circle2 = circumsedCircleconst(points.at(it1), points.at(it2), points.at(it3));
+			auto point = points.at(c), point2 = points.at(d);
+			if (sqrt((circle.x - point->getX()) * (circle.x - point->getX()) + (circle.y - point->getY()) * (circle.y - point->getY())) <= circle.r 
+				|| sqrt((circle2.x - point2->getX()) * (circle2.x - point2->getX()) + (circle2.y - point2->getY()) * (circle2.y - point2->getY())) <= circle2.r)
+			{
+				edge->t1->removed = true;
+				edge->t2->removed = true;
+				addUsedEdgesToVector(usedEdgesCopy, c, d, a, true);
+				addUsedEdgesToVector(usedEdgesCopy, c, d, b, true);
+			}
+		}
+
+
+	}
+	for each (auto t in triangles)
+	{
+		if (!t->removed)
+			newTrList.push_back(t);
+	}
+	triangles.clear();
+	usedEdges.clear();
+	for each (auto t in newTrList)
+	{
+		addUsedEdgesToVector(usedEdges, t->getIndice1(), t->getIndice2(), t->getIndice3(), true);
+	}
+
+
+	/*
 	for each (auto triangle in triangles)
 	{
 		unsigned int i1 = triangle->getIndice1(), i2 = triangle->getIndice2(), i3 = triangle->getIndice3();
@@ -306,7 +368,7 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 		int i = 0;
 		for each (auto point in points)
 		{
-			if (i != i1 && i != i2 && i != i3 && ( sqrt((c.x - point->getX()) * (c.x - point->getX()) + (c.y - point->getY()) * (c.y - point->getY())) <= c.r ) )
+			if (i != i1 && i != i2 && i != i3 && (sqrt((c.x - point->getX()) * (c.x - point->getX()) + (c.y - point->getY()) * (c.y - point->getY())) <= c.r))
 			{
 				for each (auto triangle2 in triangles)
 				{
@@ -355,21 +417,9 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 			}
 			i++;
 		}
-	}
-	for each (auto t in triangles)
-	{
-		if (!t->removed)
-			newTrList.push_back(t);
-	}
-	triangles.clear();
-	usedEdges.clear();
-	for each (auto t in newTrList)
-	{
-		triangles.push_back(t);
-		addUsedEdgesToVector(usedEdges, t->getIndice1(), t->getIndice2(), t->getIndice3());
-	}
+	}*/
 	if (changed)
-		this->flipping(usedEdges);
+		printf("changed");
 }
 
 unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi)
@@ -396,18 +446,21 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 				oldUsedEdges.push_back(edge);
 			for each (auto edge in oldUsedEdges)
 			{
-				found = false;
-				float angle = calcAngle(points.at(edge->v1), points.at(edge->v2), point);
-				if ( angle < 0 && edge->t1 != nullptr)
-					found = true;
-				else if(angle >= 0 && edge->t2 != nullptr)
-					found = true;
-				if (!found)
-					addUsedEdgesToVector(usedEdges, edge->v1, edge->v2, currentIndice);
+				if (edge->t1 != nullptr || edge->t2 != nullptr)
+				{
+					found = false;
+					float angle = calcAngle(points.at(edge->v1), points.at(edge->v2), point);
+					if ( angle < 0 && edge->t1 != nullptr)
+						found = true;
+					else if(angle >= 0 && edge->t2 != nullptr)
+						found = true;
+					if (!found)
+						addUsedEdgesToVector(usedEdges, edge->v1, edge->v2, currentIndice, true);
+				}
 			}
 		}
 		else if (currentIndice == 2)
-			addUsedEdgesToVector(usedEdges, 0, 1, 2);
+			addUsedEdgesToVector(usedEdges, 0, 1, 2, true);
 		currentIndice++;
 	}
 	if (flipping)
