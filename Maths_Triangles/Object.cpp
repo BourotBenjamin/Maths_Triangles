@@ -245,7 +245,7 @@ std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>
 	return e;
 }
 
-void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3)
+std::shared_ptr<Triangle>  Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3)
 {
 	std::shared_ptr<Triangle> triangle(new Triangle(indice1, indice2, indice3));
 	std::shared_ptr<UsedEdge> e = findEdgeInUsedEdges(usedEdges, indice1, indice2);
@@ -270,6 +270,7 @@ void Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEd
 	else
 		e->t2 = triangle;
 	triangles.push_back(triangle);
+	return triangle;
 }
 
 Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
@@ -342,8 +343,6 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 		}
 		if (edge->t1 != nullptr && edge->t2 != nullptr)
 		{
-			if (edge->t1->removed || edge->t2->removed)
-				printf("Outch ... :/");
 			unsigned int i1 = edge->t1->getIndice1(), i2 = edge->t1->getIndice2(), i3 = edge->t1->getIndice3(), it1 = edge->t2->getIndice1(), it2 = edge->t2->getIndice2(), it3 = edge->t2->getIndice3();
 			unsigned int p1, p2, p3, a = -1, b = -1, c = -1, d = -1;
 			if (it1 == i1 || it1 == i2 || it1 == i3)
@@ -365,8 +364,21 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 			c = (it1 == a || it1 == b) ? ((it2 == a || it2 == b) ? it3 : it2) : it1;
 			d = (i1 == a || i1 == b) ? ((i2 == a || i2 == b) ? i3 : i2) : i1;
 
-
-			Circle circle = circumsedCircleconst(points.at(i1), points.at(i2), points.at(i3)), circle2 = circumsedCircleconst(points.at(it1), points.at(it2), points.at(it3));
+			Circle circle, circle2;
+			if (edge->t1->hasCircumCircle())
+				circle = edge->t1->getCircumCenter();
+			else
+			{
+				circle = circumsedCircleconst(points.at(i1), points.at(i2), points.at(i3));
+				edge->t1->setCircumCenter(circle);
+			}
+			if (edge->t2->hasCircumCircle())
+				circle2 = edge->t2->getCircumCenter();
+			else
+			{
+				circle2 = circumsedCircleconst(points.at(it1), points.at(it2), points.at(it3));
+				edge->t2->setCircumCenter(circle2);
+			}
 			auto point = points.at(c), point2 = points.at(d);
 			if (sqrt((circle.x - point->getX()) * (circle.x - point->getX()) + (circle.y - point->getY()) * (circle.y - point->getY())) <= circle.r 
 				|| sqrt((circle2.x - point2->getX()) * (circle2.x - point2->getX()) + (circle2.y - point2->getY()) * (circle2.y - point2->getY())) <= circle2.r)
@@ -389,70 +401,9 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 	usedEdges.clear();
 	for each (auto t in newTrList)
 	{
-		addUsedEdgesToVector(usedEdges, t->getIndice1(), t->getIndice2(), t->getIndice3());
+		std::shared_ptr<Triangle> t2 = addUsedEdgesToVector(usedEdges, t->getIndice1(), t->getIndice2(), t->getIndice3());
+		t2->setCircumCenter(t->getCircumCenter());
 	}
-
-
-	/*
-	for each (auto triangle in triangles)
-	{
-		unsigned int i1 = triangle->getIndice1(), i2 = triangle->getIndice2(), i3 = triangle->getIndice3();
-		Circle c = circumsedCircleconst(points.at(i1), points.at(i2), points.at(i3));
-		int i = 0;
-		for each (auto point in points)
-		{
-			if (i != i1 && i != i2 && i != i3 && (sqrt((c.x - point->getX()) * (c.x - point->getX()) + (c.y - point->getY()) * (c.y - point->getY())) <= c.r))
-			{
-				for each (auto triangle2 in triangles)
-				{
-					unsigned int iT1 = triangle2->getIndice1(), iT2 = triangle2->getIndice2(), iT3 = triangle2->getIndice3();
-					unsigned int p1, p2, p3;
-					bool found = false;
-					if (iT1 == i || iT2 == i || iT3 == i)
-					{
-						if (iT1 == i1 || iT2 == i1 || iT3 == i1)
-						{
-							if (iT1 == i2 || iT2 == i2 || iT3 == i2)
-							{
-								found = true;
-								p1 = i1;
-								p2 = i2;
-								p3 = i3;
-							}
-							else if (iT1 == i3 || iT2 == i3 || iT3 == i3)
-							{
-								found = true;
-								p1 = i1;
-								p2 = i3;
-								p3 = i2;
-							}
-						}
-						else if (iT1 == i2 || iT2 == i2 || iT3 == i2)
-						{
-							if (iT1 == i3 || iT2 == i3 || iT3 == i3)
-							{
-								found = true;
-								p1 = i2;
-								p2 = i3;
-								p3 = i1;
-							}
-						}
-					}
-					if (found && !triangle->removed && !triangle2->removed)
-					{
-						triangle->removed = true;
-						triangle2->removed = true;
-						newTrList.push_back(std::shared_ptr<Triangle>(new Triangle(p3, p1, i)));
-						newTrList.push_back(std::shared_ptr<Triangle>(new Triangle(p3, p2, i)));
-						changed = true;
-					}
-				}
-			}
-			i++;
-		}
-	}*/
-	if (changed)
-		printf("changed");
 }
 
 unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi)
@@ -496,17 +447,19 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 			addUsedEdgesToVector(usedEdges, 0, 1, 2);
 		currentIndice++;
 	}
-	std::chrono::time_point<std::chrono::system_clock> start, end;
-	start = std::chrono::system_clock::now();
+
 	if (flipping)
+	{
+		std::chrono::time_point<std::chrono::system_clock> start, end;
+		start = std::chrono::system_clock::now();
+
 		this->flipping(usedEdges);
-	end = std::chrono::system_clock::now();
 
-	int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>
-		(end - start).count();
-	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-	std::cout << "elapsed time: " << elapsed_seconds << "ms\n";
+		end = std::chrono::system_clock::now();
+		int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds> (end - start).count();
+		std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+		std::cout << "flipping time: " << elapsed_seconds << "ms\n";
+	}
 	for each (auto triangle in triangles)
 	{
 		eboIndices.push_back(triangle->getIndice1());
@@ -516,49 +469,41 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 	int size = 0;
 	if (voronoi)
 	{
-		for each (auto triangle in triangles)
-		{
-			Circle c = circumsedCircleconst(points.at(triangle->getIndice1()), points.at(triangle->getIndice2()), points.at(triangle->getIndice3()));
-			triangle->setCircumCenter(c.x, c.y);
-		}
+		std::chrono::time_point<std::chrono::system_clock> start, end;
+		start = std::chrono::system_clock::now();
 		for each (auto edge in usedEdges)
 		{
 			if (edge->t1 != nullptr && edge->t2 != nullptr)
 			{
-				std::shared_ptr<VoronoiEdge> vEdge = std::shared_ptr<VoronoiEdge>(new VoronoiEdge());
-				vEdge->v1X = edge->t1->getCircumCenterX();
-				vEdge->v2X = edge->t2->getCircumCenterX();
-				vEdge->v1Y = edge->t1->getCircumCenterY();
-				vEdge->v2Y = edge->t2->getCircumCenterY();
+				Circle c1 = edge->t1->getCircumCenter(), c2 = edge->t2->getCircumCenter();
 				size += 2;
-				vboCoords.push_back(edge->t1->getCircumCenterX());
-				vboCoords.push_back(edge->t1->getCircumCenterY());
+				vboCoords.push_back(c1.x);
+				vboCoords.push_back(c1.y);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
-				vboCoords.push_back(edge->t2->getCircumCenterX());
-				vboCoords.push_back(edge->t2->getCircumCenterY());
+				vboCoords.push_back(c2.x);
+				vboCoords.push_back(c2.y);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
-				points.at(edge->v1)->addVoronoiEdgeToRegion(vEdge);
-				points.at(edge->v2)->addVoronoiEdgeToRegion(vEdge);
 			}
 			else if (edge->t1 != nullptr)
 			{
+				Circle c1 = edge->t1->getCircumCenter();
 				size += 2;
-				vboCoords.push_back(edge->t1->getCircumCenterX());
-				vboCoords.push_back(edge->t1->getCircumCenterY());
+				vboCoords.push_back(c1.x);
+				vboCoords.push_back(c1.y);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
 				float x = points.at(edge->v2)->getX() - points.at(edge->v1)->getX();
 				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
-				vboCoords.push_back(edge->t1->getCircumCenterX() + y);
-				vboCoords.push_back(edge->t1->getCircumCenterY() - x);
+				vboCoords.push_back(c1.x + y);
+				vboCoords.push_back(c1.y - x);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(1.0f);
@@ -566,23 +511,28 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 			}
 			else if (edge->t2 != nullptr)
 			{
+				Circle  c2 = edge->t2->getCircumCenter();
 				size += 2;
-				vboCoords.push_back(edge->t2->getCircumCenterX());
-				vboCoords.push_back(edge->t2->getCircumCenterY());
+				vboCoords.push_back(c2.x);
+				vboCoords.push_back(c2.y);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
 				float x = points.at(edge->v2)->getX() - points.at(edge->v1)->getX();
 				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
-				vboCoords.push_back(edge->t2->getCircumCenterX() - y);
-				vboCoords.push_back(edge->t2->getCircumCenterY() + x);
+				vboCoords.push_back(c2.x - y);
+				vboCoords.push_back(c2.y + x);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(1.0f);
 			}
 		}
+		end = std::chrono::system_clock::now();
+		int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds> (end - start).count();
+		std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+		std::cout << "voronoi time: " << elapsed_seconds << "ms\n";
 	}
 	return size;
 }
