@@ -14,6 +14,11 @@ void Object::addTriangle(std::shared_ptr<Triangle>& triangle)
 
 void Object::addPoint(std::shared_ptr<Point>& p)
 {
+	for each (auto p2 in points)
+	{
+		if (p2->getX() == p->getX() && p2->getY() == p->getY())
+			return;
+	}
 	points.push_back(p);
 }
 
@@ -323,6 +328,7 @@ Circle baryCentre(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::sha
 
 void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 {
+	int loops = 0;
 	bool changed = false;
 	std::vector<std::shared_ptr<UsedEdge>> usedEdgesCopy;
 	std::vector<std::shared_ptr<Triangle>> newTrList;
@@ -330,8 +336,9 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 	{
 		usedEdgesCopy.push_back(edge);
 	}
-	while (usedEdgesCopy.size() > 0)
+	while (usedEdgesCopy.size() > 0 && loops < 5000)
 	{
+		loops++;
 		std::shared_ptr<UsedEdge> edge = usedEdgesCopy.back();
 		usedEdgesCopy.pop_back();
 		if (edge->t1 == nullptr && edge->t2 != nullptr)
@@ -417,6 +424,8 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 
 
 	}
+	if (loops >= 5000)
+		std::cout << "Lots of loop" << std::endl;
 	for each (auto t in triangles)
 	{
 		if (!t->removed)
