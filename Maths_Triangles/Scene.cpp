@@ -48,7 +48,7 @@ void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsig
 		voronoisSize.push_back(size);
 		triangulationsSize.push_back((vboCoords.size() / 6) - size);
 		currentObject++;
-		firstIndex += vboCoords.size() / 6;
+		firstIndex = vboCoords.size() / 6;
 	}
 }
 
