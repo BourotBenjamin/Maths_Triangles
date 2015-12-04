@@ -45,6 +45,22 @@ void Point::addVoronoiEdgeToRegion(std::shared_ptr<VoronoiEdge> edge)
 	region.push_back(edge);
 }
 
+
+void Point::setSelected(bool selected)
+{
+	this->selected = selected;
+}
+bool Point::getSelected()
+{
+	return selected;
+}
+
+void Point::setPos(float x, float y)
+{
+	this->x = x;
+	this->y = y;
+}
+
 Point::~Point()
 {
 }

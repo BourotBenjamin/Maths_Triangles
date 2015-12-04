@@ -26,6 +26,11 @@ enum Mode {
 	TRIANGULATION_WITH_FLIPPING,
 	TRIANGULATION_WITH_VORONOI
 };
+enum EditMode {
+	ADD,
+	FIND,
+	MOVE
+};
 
 int window_init();
 void updateVBO();
@@ -36,12 +41,14 @@ void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods);
 
 std::vector<float> vboCoords, vboVoronoi;
 std::vector<unsigned int> eboIndices;
+std::shared_ptr<Point> selectedPoint = nullptr;
 std::shared_ptr<Point> p1, p2;
 std::shared_ptr<Object> o;
 Scene scene;
 GLuint VBO_VORONOI, VBO_POINTS, EBO_POINTS;
 int pSize;
 Mode currentMode = ENVELOPPE_JARVIS;
+EditMode currentEditMode = ADD;
 std::vector<unsigned short> enveloppesSizes, voronoisSizes, triangulationsSizes;
 
 

@@ -18,11 +18,15 @@ public:
 	bool operator==(Point& p);
 	bool operator!=(Point& p);
 	void addVoronoiEdgeToRegion(std::shared_ptr<VoronoiEdge> edge);
+	void setSelected(bool selected);
+	bool getSelected();
+	void setPos(float x, float y);
 	~Point();
 private:
 	float x;
 	float y;
 	float angleFromBary;
+	bool selected = false;
 	std::vector<std::shared_ptr<VoronoiEdge>> region;
 };
 

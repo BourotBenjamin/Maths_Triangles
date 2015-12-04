@@ -47,14 +47,27 @@ unsigned short Object::getPoints(std::vector<float>& vboCoords)
 		vboCoords.push_back((*ptr)->getY());
 		vboCoords.push_back(1.0f);
 		vboCoords.push_back(1.0f);
-		vboCoords.push_back(1.0f);
+		if (!(*ptr)->getSelected())
+			vboCoords.push_back(1.0f);
+		else
+			vboCoords.push_back(0.0f);
 		vboCoords.push_back(1.0f);
 		i++;
 		ptr++;
 	}
 	return i;
 }
-
+void Object::removePoint(std::shared_ptr<Point>& point)
+{
+	auto ptr = points.begin();
+	while (ptr != points.end())
+	{
+		if (point->getX() == (*ptr)->getX() && point->getY() == (*ptr)->getY())
+			points.erase(ptr);
+		else
+			ptr++;
+	}
+}
 
 unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 {
@@ -79,7 +92,10 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 		vboCoords.push_back(first->getY());
 		vboCoords.push_back(1.0f);
 		vboCoords.push_back(1.0f);
-		vboCoords.push_back(1.0f);
+		if (!first->getSelected())
+			vboCoords.push_back(1.0f);
+		else
+			vboCoords.push_back(0.0f);
 		vboCoords.push_back(1.0f);
 		std::shared_ptr<Point> lastP = std::shared_ptr<Point>(new Point(first->getX(), 0.0f)), current = first, best = nullptr;
 		float angle = 0.0f, bestAngle = 0.0f;
@@ -111,7 +127,10 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 			vboCoords.push_back(best->getY());
 			vboCoords.push_back(1.0f);
 			vboCoords.push_back(1.0f);
-			vboCoords.push_back(1.0f);
+			if (!best->getSelected())
+				vboCoords.push_back(1.0f);
+			else
+				vboCoords.push_back(0.0f);
 			vboCoords.push_back(1.0f);
 		} while (*current != *first);
 		return enveloppe.size();
@@ -187,7 +206,10 @@ unsigned short Object::getEnveloppeGrahamScan(std::vector<float>& vboCoords)
 			vboCoords.push_back((*ptr)->getY());
 			vboCoords.push_back(1.0f);
 			vboCoords.push_back(1.0f);
-			vboCoords.push_back(1.0f);
+			if (!(*ptr)->getSelected())
+				vboCoords.push_back(1.0f);
+			else
+				vboCoords.push_back(0.0f);
 			vboCoords.push_back(1.0f);
 			ptr++;
 		}
@@ -196,7 +218,10 @@ unsigned short Object::getEnveloppeGrahamScan(std::vector<float>& vboCoords)
 		vboCoords.push_back((*ptr)->getY());
 		vboCoords.push_back(1.0f);
 		vboCoords.push_back(1.0f);
-		vboCoords.push_back(1.0f);
+		if (!(*ptr)->getSelected())
+			vboCoords.push_back(1.0f);
+		else
+			vboCoords.push_back(0.0f);
 		vboCoords.push_back(1.0f);
 		return enveloppe.size() + 1;
 	}
@@ -406,7 +431,7 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 	}
 }
 
-unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi)
+unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi, unsigned int firstIndex)
 {
 	triangles.clear();
 	std::sort(points.begin(), points.end(), cmpPointsAbsAndOrd);
@@ -421,7 +446,10 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 		vboCoords.push_back(point->getY());
 		vboCoords.push_back(1.0f);
 		vboCoords.push_back(1.0f);
-		vboCoords.push_back(1.0f);
+		if (!point->getSelected())
+			vboCoords.push_back(1.0f);
+		else
+			vboCoords.push_back(0.0f);
 		vboCoords.push_back(1.0f);
 		if (currentIndice > 2)
 		{
@@ -449,28 +477,16 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 	}
 
 	if (flipping)
-	{
-		std::chrono::time_point<std::chrono::system_clock> start, end;
-		start = std::chrono::system_clock::now();
-
 		this->flipping(usedEdges);
-
-		end = std::chrono::system_clock::now();
-		int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds> (end - start).count();
-		std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-		std::cout << "flipping time: " << elapsed_seconds << "ms\n";
-	}
 	for each (auto triangle in triangles)
 	{
-		eboIndices.push_back(triangle->getIndice1());
-		eboIndices.push_back(triangle->getIndice2());
-		eboIndices.push_back(triangle->getIndice3());
+		eboIndices.push_back(triangle->getIndice1() + firstIndex);
+		eboIndices.push_back(triangle->getIndice2() + firstIndex);
+		eboIndices.push_back(triangle->getIndice3() + firstIndex);
 	}
 	int size = 0;
 	if (voronoi)
 	{
-		std::chrono::time_point<std::chrono::system_clock> start, end;
-		start = std::chrono::system_clock::now();
 		for each (auto edge in usedEdges)
 		{
 			if (edge->t1 != nullptr && edge->t2 != nullptr)
@@ -529,10 +545,6 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 				vboCoords.push_back(1.0f);
 			}
 		}
-		end = std::chrono::system_clock::now();
-		int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds> (end - start).count();
-		std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-		std::cout << "voronoi time: " << elapsed_seconds << "ms\n";
 	}
 	return size;
 }
@@ -549,4 +561,20 @@ bool cmpPointsAbsAndOrd(const std::shared_ptr<Point>& a, const std::shared_ptr<P
 bool cmpPointsAngleFromBarycentre(const std::shared_ptr<Point>& a, const std::shared_ptr<Point>& b)
 {
 	return (a->getAngleFromBary() < b->getAngleFromBary());
+}
+
+std::shared_ptr<Point> Object::findNearestPoint(float x, float y)
+{
+	std::shared_ptr<Point> best = nullptr;
+	float min = FLT_MAX, dist;
+	for each (auto p in points)
+	{
+		dist = sqrt((x - p->getX()) * (x - p->getX()) + (y - p->getY()) * (y - p->getY()));
+		if (dist < min)
+		{
+			min = dist;
+			best = p;
+		}
+	}
+	return best;
 }

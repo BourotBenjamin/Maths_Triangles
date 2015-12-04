@@ -158,8 +158,25 @@ void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods)
 	{
 		double x, y;
 		glfwGetCursorPos(activeWindow, &x, &y);
-		p1 = std::shared_ptr<Point>(new Point(x, y));
-		o->addPoint(p1);
+		if (currentEditMode == FIND)
+		{
+			/*if (selectedPoint != nullptr)
+				selectedPoint->setSelected(false);*/
+			selectedPoint = o->findNearestPoint(x, y);
+			selectedPoint->setSelected(true);
+			currentEditMode = MOVE;
+		}
+		else if (currentEditMode == MOVE)
+		{
+			selectedPoint->setPos(x, y);
+			selectedPoint->setSelected(false);
+			currentEditMode = ADD;
+		}
+		else
+		{
+			p1 = std::shared_ptr<Point>(new Point(x, y));
+			o->addPoint(p1);
+		}
 		updateVBO();
 	}
 }
@@ -180,6 +197,20 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 		case GLFW_KEY_N:
 			o = std::shared_ptr<Object>(new Object());
 			scene.addObject(o);
+			break;
+		case GLFW_KEY_C:
+			scene.removeAll();
+			o = std::shared_ptr<Object>(new Object());
+			scene.addObject(o);
+			updateVBO();
+			break;
+		case GLFW_KEY_E:
+			currentEditMode = FIND;
+			break;
+		case GLFW_KEY_R:
+			o->removePoint(selectedPoint);
+			updateVBO();
+			currentEditMode = ADD;
 			break;
 		case GLFW_KEY_KP_1:
 			currentMode = ENVELOPPE_JARVIS;
