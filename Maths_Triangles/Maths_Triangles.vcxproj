@@ -77,6 +77,7 @@
   <ItemGroup>
     <ClInclude Include="Object.h" />
     <ClInclude Include="Point.h" />
+    <ClInclude Include="Pyramid.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Triangle.h" />
@@ -85,6 +86,7 @@
   <ItemGroup>
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Point.cpp" />
+    <ClCompile Include="Pyramid.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Triangle.cpp" />
     <ClCompile Include="MyWindow.cpp" />

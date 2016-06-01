@@ -44,7 +44,7 @@ void Scene::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsig
 	unsigned int firstIndex = 0;
 	while (currentObject != objects.end())
 	{
-		unsigned short size = ((*currentObject)->simpleTriangulation(vboCoords, indices, flipping, voronoi, firstIndex));
+		unsigned short size = ((*currentObject)->simpleTriangulation3D(vboCoords, indices, flipping, voronoi, firstIndex));
 		voronoisSize.push_back(size);
 		triangulationsSize.push_back((vboCoords.size() / 6) - size);
 		currentObject++;

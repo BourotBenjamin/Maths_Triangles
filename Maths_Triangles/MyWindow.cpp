@@ -77,6 +77,9 @@ int window_mainLoop(GLFWwindow* openGLWindow)
 		unsigned short currentSize = pSize;
 		switch (currentMode)
 		{
+		case SIMPLE_DRAW:
+			glDrawArrays(GL_POINTS, 0, pSize);
+			break;
 		case ENVELOPPE_JARVIS:
 		case ENVELOPPE_GRAHAM_SCAN:
 			glDrawArrays(GL_POINTS, 0, pSize);
@@ -122,6 +125,9 @@ void updateVBO()
 	voronoisSizes.clear();
 	switch (currentMode)
 	{
+	case SIMPLE_DRAW:
+		pSize = scene.getPoints(vboCoords);
+		break;
 	case ENVELOPPE_JARVIS:
 		pSize = scene.getPoints(vboCoords);
 		scene.getJarvisEnveloppes(vboCoords, enveloppesSizes);
@@ -162,20 +168,24 @@ void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods)
 		{
 			/*if (selectedPoint != nullptr)
 				selectedPoint->setSelected(false);*/
-			selectedPoint = o->findNearestPoint(x, y);
+			selectedPoint = o->findNearestPoint(x, y, 0.0);
+			// TODO : getZ
 			selectedPoint->setSelected(true);
 			currentEditMode = MOVE;
 		}
 		else if (currentEditMode == MOVE)
 		{
-			selectedPoint->setPos(x, y);
+			selectedPoint->setPos(x, y, 0.0);
+			// TODO : getZ
 			selectedPoint->setSelected(false);
 			currentEditMode = ADD;
 		}
 		else
 		{
-			p1 = std::shared_ptr<Point>(new Point(x, y));
-			o->addPoint(p1);
+			o->generatePoints(x, y, 0.0);
+			/*p1 = std::shared_ptr<Point>(new Point(x, y, rand() % 100 / 100.f));
+			// TODO : getZ
+			o->addPoint(p1);*/
 		}
 		updateVBO();
 	}
@@ -211,6 +221,10 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 			o->removePoint(selectedPoint);
 			updateVBO();
 			currentEditMode = ADD;
+			break;
+		case GLFW_KEY_KP_0:
+			currentMode = SIMPLE_DRAW;
+			updateVBO();
 			break;
 		case GLFW_KEY_KP_1:
 			currentMode = ENVELOPPE_JARVIS;

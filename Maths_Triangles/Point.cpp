@@ -1,10 +1,11 @@
 #include "Point.h"
 
 
-Point::Point(float x, float y)
+Point::Point(float x, float y, float z)
 {
-	this->x = x; 
+	this->x = x;
 	this->y = y;
+	this->z = z;
 }
 
 void Point::calcAngleFromBary(float xBarycentre, float yBarycentre)
@@ -28,10 +29,15 @@ const float Point::getY() const
 	return this->y;
 }
 
+const float Point::getZ() const
+{
+	return this->z;
+}
+
 
 bool Point::operator==(Point& p)
 {
-	return (this->x == p.getX() && this->y == p.getY());
+	return (this->x == p.getX() && this->y == p.getY() && this->z == p.getZ());
 }
 
 bool Point::operator!=(Point& p)
@@ -55,10 +61,11 @@ bool Point::getSelected()
 	return selected;
 }
 
-void Point::setPos(float x, float y)
+void Point::setPos(float x, float y, float z)
 {
 	this->x = x;
 	this->y = y;
+	this->z = z;
 }
 
 Point::~Point()

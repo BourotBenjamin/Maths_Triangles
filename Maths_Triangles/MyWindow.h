@@ -20,6 +20,7 @@ GLFWwindow* openGLWindow;
 const GLuint WIDTH = 1600, HEIGHT = 800;
 
 enum Mode {
+	SIMPLE_DRAW,
 	ENVELOPPE_JARVIS,
 	ENVELOPPE_GRAHAM_SCAN,
 	TRIANGULATION,
@@ -47,7 +48,7 @@ std::shared_ptr<Object> o;
 Scene scene;
 GLuint VBO_VORONOI, VBO_POINTS, EBO_POINTS;
 int pSize;
-Mode currentMode = ENVELOPPE_JARVIS;
+Mode currentMode = SIMPLE_DRAW;
 EditMode currentEditMode = ADD;
 std::vector<unsigned short> enveloppesSizes, voronoisSizes, triangulationsSizes;
 

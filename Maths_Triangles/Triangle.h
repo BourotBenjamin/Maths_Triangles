@@ -1,8 +1,13 @@
+#ifndef TRIANGLE_H
+#define TRIANGLE_H
+
 #include "Point.h"
+
+class Pyramid;
 
 struct Circle
 {
-	float x, y, r;
+	float x, y, z, r, r2;
 };
 
 class Triangle
@@ -22,10 +27,15 @@ public:
 	void addIndice(unsigned short indice);
 	Circle& getCircumCenter();
 	bool hasCircumCircle();
+	bool Triangle::operator==(Triangle& p);
+	bool Triangle::operator!=(Triangle& p);
 	~Triangle();
+	std::shared_ptr<Pyramid> p1, p2;
+	bool hasPoints(unsigned int p1, unsigned int p2, unsigned int p3);
 private:
 	unsigned short indice1, indice2, indice3;
 	Circle circumCenter;
 	bool circumCircle = false;
 };
 
+#endif

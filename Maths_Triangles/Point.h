@@ -10,21 +10,23 @@ struct VoronoiEdge
 class Point
 {
 public:
-	Point(float x, float y);
+	Point(float x, float y, float z);
 	void calcAngleFromBary(float xBarycentre, float yBarycentre);
 	const float getX() const;
 	const float getY() const;
+	const float getZ() const;
 	const float Point::getAngleFromBary() const;
 	bool operator==(Point& p);
 	bool operator!=(Point& p);
 	void addVoronoiEdgeToRegion(std::shared_ptr<VoronoiEdge> edge);
 	void setSelected(bool selected);
 	bool getSelected();
-	void setPos(float x, float y);
+	void setPos(float x, float y, float z);
 	~Point();
 private:
 	float x;
 	float y;
+	float z;
 	float angleFromBary;
 	bool selected = false;
 	std::vector<std::shared_ptr<VoronoiEdge>> region;

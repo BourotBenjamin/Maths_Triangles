@@ -4,12 +4,42 @@
 
 Object::Object()
 {
-	triangles = std::vector<std::shared_ptr<Triangle>>();
+	pyramids = std::vector<std::shared_ptr<Pyramid>>();
 }
-
+/*
 void Object::addTriangle(std::shared_ptr<Triangle>& triangle)
 {
-	triangles.push_back(triangle);
+	//triangles.push_back(triangle);
+}
+*/
+
+float getRandomCoords(int maxDist, float middle)
+{
+	int dist = maxDist / 10;
+	while (dist <= maxDist)
+	{
+		if (rand() % 3 > 1)
+			return rand() % (dist * 2) + middle - dist;
+		dist *= 1.5;
+	}
+	return rand() % (dist * 2) + middle - dist;
+}
+
+void Object::generatePoints(float x, float y, float z)
+{
+	int i = 0;
+	float x2, y2, z2, tmp;
+	bool ok;
+	while (i < NB_POINTS)
+	{
+		++i;
+		x2 = getRandomCoords(MAX_DIST, x);
+		y2 = getRandomCoords(MAX_DIST, y);
+		//z2 = getRandomCoords(MAX_DIST, z);
+		z2 = 0.0f;
+		points.push_back(std::shared_ptr<Point>(new Point(x2, y2, z2)));
+	}
+	std::cout << " Points " << std::endl;
 }
 
 void Object::addPoint(std::shared_ptr<Point>& p)
@@ -89,34 +119,36 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 					first = (*ptr);
 				else if (first->getX() == (*ptr)->getX() && first->getY() > (*ptr)->getY())
 					first = (*ptr);
+				else if (first->getX() == (*ptr)->getX() && first->getY() == (*ptr)->getY() && first->getZ() > (*ptr)->getZ())
+					first = (*ptr);
 			}
 			ptr++;
 		}
 		enveloppe.push_back(first);
 		vboCoords.push_back(first->getX());
 		vboCoords.push_back(first->getY());
-		vboCoords.push_back(1.0f);
+		vboCoords.push_back(first->getZ());
 		vboCoords.push_back(1.0f);
 		if (!first->getSelected())
 			vboCoords.push_back(1.0f);
 		else
 			vboCoords.push_back(0.0f);
 		vboCoords.push_back(1.0f);
-		std::shared_ptr<Point> lastP = std::shared_ptr<Point>(new Point(first->getX(), 0.0f)), current = first, best = nullptr;
+		std::shared_ptr<Point> lastP = std::shared_ptr<Point>(new Point(first->getX(), 0.0f, 0.0f)), current = first, best = nullptr;
 		float angle = 0.0f, bestAngle = 0.0f;
 		do
 		{
 			bestAngle = 0.0f;
-			float v1X = current->getX() - lastP->getX(), v1Y = current->getY() - lastP->getY(), v2X = 0.0f, v2Y = 0.0f;
-			float l1 = sqrt(v1X*v1X + v1Y*v1Y), l2 = 0.0;
+			float v1X = current->getX() - lastP->getX(), v1Y = current->getY() - lastP->getY(), v1Z = current->getZ() - lastP->getZ(), v2X = 0.0f, v2Y = 0.0f, v2Z = 0.0f;
+			float l1 = sqrt(v1X*v1X + v1Y*v1Y + v1Z*v1Z), l2 = 0.0;
 			auto ptr = points.begin();
 			while (ptr != points.end())
 			{
 				if (*(*ptr) != *current)
 				{
-					v2X = current->getX() - (*ptr)->getX(), v2Y = current->getY() - (*ptr)->getY();
-					l2 = sqrt(v2X*v2X + v2Y*v2Y);
-					angle = acos((v1X*v2X + v1Y*v2Y) / (l1*l2));	// calc angle between lastP->current current->ptr
+					v2X = current->getX() - (*ptr)->getX(), v2Y = current->getY() - (*ptr)->getY(), v2Z = current->getZ() - (*ptr)->getZ();
+					l2 = sqrt(v2X*v2X + v2Y*v2Y + v2Z*v2Z);
+					angle = acos((v1X*v2X + v1Y*v2Y + v1Z*v2Z) / (l1*l2));	// calc angle between lastP->current current->ptr
 					if (angle > bestAngle)
 					{
 						bestAngle = angle;
@@ -130,7 +162,7 @@ unsigned short Object::getEnveloppeJarvis(std::vector<float>& vboCoords)
 			enveloppe.push_back(best);
 			vboCoords.push_back(best->getX());
 			vboCoords.push_back(best->getY());
-			vboCoords.push_back(1.0f);
+			vboCoords.push_back(best->getZ());
 			vboCoords.push_back(1.0f);
 			if (!best->getSelected())
 				vboCoords.push_back(1.0f);
@@ -148,7 +180,7 @@ unsigned short Object::getEnveloppeGrahamScan(std::vector<float>& vboCoords)
 	if (points.size() > 2)
 	{
 		std::vector<std::shared_ptr<Point>> enveloppe;
-		xBarycentre = 0.0f, yBarycentre = 0.0f;
+		xBarycentre = 0.0f, yBarycentre = 0.0f, zBarycentre = 0.0f;
 		auto ptr = points.begin();
 		int pointsSize = 0;
 		while (ptr != points.end())
@@ -156,11 +188,13 @@ unsigned short Object::getEnveloppeGrahamScan(std::vector<float>& vboCoords)
 			pointsSize++;
 			xBarycentre += (*ptr)->getX();
 			yBarycentre += (*ptr)->getY();
+			zBarycentre += (*ptr)->getZ();
 			enveloppe.push_back((*ptr));
 			ptr++;
 		}
 		xBarycentre /= pointsSize;
 		yBarycentre /= pointsSize;
+		zBarycentre /= pointsSize;
 		ptr = enveloppe.begin();
 		while (ptr != enveloppe.end())
 		{
@@ -209,7 +243,7 @@ unsigned short Object::getEnveloppeGrahamScan(std::vector<float>& vboCoords)
 		{
 			vboCoords.push_back((*ptr)->getX());
 			vboCoords.push_back((*ptr)->getY());
-			vboCoords.push_back(1.0f);
+			vboCoords.push_back((*ptr)->getZ());
 			vboCoords.push_back(1.0f);
 			if (!(*ptr)->getSelected())
 				vboCoords.push_back(1.0f);
@@ -221,7 +255,7 @@ unsigned short Object::getEnveloppeGrahamScan(std::vector<float>& vboCoords)
 		ptr = enveloppe.begin();
 		vboCoords.push_back((*ptr)->getX());
 		vboCoords.push_back((*ptr)->getY());
-		vboCoords.push_back(1.0f);
+		vboCoords.push_back((*ptr)->getZ());
 		vboCoords.push_back(1.0f);
 		if (!(*ptr)->getSelected())
 			vboCoords.push_back(1.0f);
@@ -252,6 +286,27 @@ float calcAngle(std::shared_ptr<Point> A, std::shared_ptr<Point> B, std::shared_
 	return angle;
 }
 
+// Return wich  side of triangle is D 
+// > 0 left / < 0 right
+float Object::calcAngle3D(std::shared_ptr<Triangle> triangle, std::shared_ptr<Point> D)
+{
+	float aX = points.at(triangle->getIndice1())->getX(), aY = points.at(triangle->getIndice1())->getX(), aZ = points.at(triangle->getIndice1())->getZ();
+	float bX = points.at(triangle->getIndice2())->getX(), bY = points.at(triangle->getIndice2())->getX(), bZ = points.at(triangle->getIndice2())->getZ();
+	float cX = points.at(triangle->getIndice3())->getX(), cY = points.at(triangle->getIndice3())->getX(), cZ = points.at(triangle->getIndice3())->getZ();
+	float dX = D->getX() - ((aX + bX + cX) / 3), dY = D->getY() - ((aY + bY + cY) / 3);
+	//float dX = D->getX() , dY = D->getY();
+	float nX = (cY - aY) * (bZ - aZ) - (cZ - aZ) * (bY - aY);
+	float nY = (cZ - aZ) * (bX - aX) - (cX - aX) * (bZ - aZ);
+	float nZ = (cX - aX) * (bY - aY) - (cY - aY) * (bX - aX);
+
+	float angle = (atan2(nY, nX) - atan2(dY, dX));
+	while (angle > M_PI)
+		angle -= M_PI * 2;
+	while (angle < -M_PI)
+		angle += M_PI * 2;
+	return angle;
+}
+
 std::shared_ptr<UsedEdge> Object::findEdgeInUsedEdges(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2)
 {
 	for each (auto e in usedEdges)
@@ -262,6 +317,7 @@ std::shared_ptr<UsedEdge> Object::findEdgeInUsedEdges(std::vector<std::shared_pt
 	return nullptr;
 }
 
+/*
 std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3, std::shared_ptr<Triangle> triangle)
 {
 	std::shared_ptr<UsedEdge> e = std::shared_ptr<UsedEdge>(new UsedEdge());
@@ -274,7 +330,9 @@ std::shared_ptr<UsedEdge> Object::addEdge(std::vector<std::shared_ptr<UsedEdge>>
 	usedEdges.push_back(e);
 	return e;
 }
+*/
 
+/*
 std::shared_ptr<Triangle>  Object::addUsedEdgesToVector(std::vector<std::shared_ptr<UsedEdge>>& usedEdges, unsigned int indice1, unsigned int indice2, unsigned int indice3)
 {
 	std::shared_ptr<Triangle> triangle(new Triangle(indice1, indice2, indice3));
@@ -302,30 +360,261 @@ std::shared_ptr<Triangle>  Object::addUsedEdgesToVector(std::vector<std::shared_
 	triangles.push_back(triangle);
 	return triangle;
 }
+*/
 
-Circle circumsedCircleconst(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
+Circle circumsedCircle(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
 {
 	Circle circle;
-	float aX = a->getX(), aY = a->getY(), bX = b->getX(), bY = b->getY(), cX = c->getX(), cY = c->getY();
-	float D = 2 * (aX  * (bY - cY) + bX * (cY - aY) + cX * (aY - bY));
-	circle.x = (((aX * aX) + (aY * aY)) * (bY - cY) + ((bX * bX) + (bY * bY)) * (cY - aY) + ((cX * cX) + (cY * cY)) * (aY - bY)) / D;
-	circle.y = (((aX * aX) + (aY * aY)) * (cX - bX) + ((bX * bX) + (bY * bY)) * (aX - cX) + ((cX * cX) + (cY * cY)) * (bX - aX)) / D;
-	circle.r = sqrt((bX - circle.x) * (bX - circle.x) + (bY - circle.y) * (bY - circle.y));
+	float aX = a->getX(), aY = a->getY(), aZ = a->getZ(), bX = b->getX(), bY = b->getY(), bZ = b->getZ(), cX = c->getX(), cY = c->getY(), cZ = c->getZ();
+	float acX = cX - aX, acY = cY - aY, acZ = cZ - aZ;
+	float abX = bX - aX, abY = bY - aY, abZ = bZ - aZ;
+	float abXacX = (abY * acZ) - (abZ * acY);
+	float abXacY = (abZ * acX) - (abX * acZ);
+	float abXacZ = (abX * acY) - (abY * acX);
+	float acLen2 = acX * acX + acY * acY + acZ * acZ;
+	float abLen2 = abX * abX + abY * abY + abZ * abZ;
+	float abXacLen2 = abXacX * abXacX + abXacY * abXacY + abXacZ * abXacZ;
+
+	circle.x = (((abXacY * abZ) - (abXacZ * abY)) * acLen2 + ((acY * abXacZ) - (acZ * abXacY)) * abLen2) / (2.f * abXacLen2);
+	circle.y = (((abXacZ * abX) - (abXacX * abZ)) * acLen2 + ((acZ * abXacX) - (acX * abXacZ)) * abLen2) / (2.f * abXacLen2);
+	circle.z = (((abXacX * abY) - (abXacY * abX)) * acLen2 + ((acX * abXacY) - (acY * abXacX)) * abLen2) / (2.f * abXacLen2);
+	circle.r = sqrt(circle.x * circle.x + circle.y * circle.y + circle.z * circle.z);
+	circle.x += aX;
+	circle.y += aY;
+	circle.z += aZ;
 	return circle;
 }
 
 Circle baryCentre(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
 {
 	Circle circle;
-	float aX = a->getX(), aY = a->getY(), bX = b->getX(), bY = b->getY(), cX = c->getX(), cY = c->getY();
+	float aX = a->getX(), aY = a->getY(), aZ = a->getZ(), bX = b->getX(), bY = b->getY(), bZ = b->getZ(), cX = c->getX(), cY = c->getY(), cZ = c->getZ();
 	circle.x = (aX + bX + cX) / 3;
 	circle.y = (aY + bY + cY) / 3;
+	circle.z = (aZ + bZ + cZ) / 3;
 	circle.r = 0;
 	return circle;
 }
 
+std::shared_ptr<Triangle> Object::findUsedTriangle(std::vector<std::shared_ptr<Triangle>>& usedTriangles, unsigned int p1, unsigned int p2, unsigned int p3)
+{
+	for each(auto triangle in usedTriangles)
+	{
+		if (triangle->hasPoints(p1, p2, p3))
+		{
+			return triangle;
+		}
+	}
+	return nullptr;
+}
+
+void Object::addPyramidToTriangleUsed(std::shared_ptr<Triangle> triangle, unsigned int pointNotOnTriangle, std::shared_ptr<Pyramid> pyramid)
+{
+	if (calcAngle3D(triangle, points.at(pointNotOnTriangle)) > 0)
+	{
+		triangle->p1 = pyramid;
+	}
+	else
+	{
+		triangle->p2 = pyramid;
+	}
+}
+
+void Object::createPyramidsAndAddUsedTriangles(std::vector<std::shared_ptr<Triangle>>& usedTriangles, unsigned int common1, unsigned int common2, unsigned int common3, unsigned int alone1, unsigned int alone2)
+{
+	// Two pyramids formed by t1 t2 t3 t4 && t4 t5 t6 t7
+	std::shared_ptr<Triangle> t1, t2, t3, t4, t5, t6, t7;
+	t1 = findUsedTriangle(usedTriangles, common1, common2, alone1);
+	if (t1 == nullptr)
+	{
+		t1 = std::shared_ptr<Triangle>(new Triangle(common1, common2, alone1));
+		usedTriangles.push_back(t1);
+	}
+	t2 = findUsedTriangle(usedTriangles, common3, common2, alone1);
+	if (t2 == nullptr)
+	{
+		t2 = std::shared_ptr<Triangle>(new Triangle(common3, common2, alone1));
+		usedTriangles.push_back(t2);
+	}
+	t3 = findUsedTriangle(usedTriangles, common1, common3, alone1);
+	if (t3 == nullptr)
+	{
+		t3 = std::shared_ptr<Triangle>(new Triangle(common1, common3, alone1));
+		usedTriangles.push_back(t3);
+	}
+	t4 = findUsedTriangle(usedTriangles, common1, common2, common3);
+	if (t4 == nullptr)
+	{
+		t4 = std::shared_ptr<Triangle>(new Triangle(common1, common2, common3));
+		usedTriangles.push_back(t4);
+	}
+	std::shared_ptr<Pyramid> newP1 = std::shared_ptr<Pyramid>(new Pyramid(common1, common2, common3, alone1, t1, t2, t3, t4));
+	pyramids.push_back(newP1);
+	addPyramidToTriangleUsed(t1, common3, newP1);
+	addPyramidToTriangleUsed(t2, common1, newP1);
+	addPyramidToTriangleUsed(t3, common2, newP1);
+	addPyramidToTriangleUsed(t4, alone1, newP1);
+	if (alone2 != -1)
+	{
+		t5 = findUsedTriangle(usedTriangles, common1, common2, alone2);
+		if (t5 == nullptr)
+		{
+			t5 = std::shared_ptr<Triangle>(new Triangle(common1, common2, alone2));
+			usedTriangles.push_back(t5);
+		}
+		t6 = findUsedTriangle(usedTriangles, common3, common2, alone2);
+		if (t6 == nullptr)
+		{
+			t6 = std::shared_ptr<Triangle>(new Triangle(common3, common2, alone2));
+			usedTriangles.push_back(t6);
+		}
+		t7 = findUsedTriangle(usedTriangles, common1, common3, alone2);
+		if (t7 == nullptr)
+		{
+			t7 = std::shared_ptr<Triangle>(new Triangle(common1, common3, alone2));
+			usedTriangles.push_back(t7);
+		}
+		std::shared_ptr<Pyramid> newP2 = std::shared_ptr<Pyramid>(new Pyramid(common1, common2, common3, alone2, t4, t5, t6, t7));
+		pyramids.push_back(newP2);
+		addPyramidToTriangleUsed(t5, common3, newP2);
+		addPyramidToTriangleUsed(t6, common1, newP2);
+		addPyramidToTriangleUsed(t7, common2, newP2);
+		addPyramidToTriangleUsed(t4, alone2, newP2);
+	}
+}
+
+void Object::createNewPyramids(std::vector<std::shared_ptr<Triangle>>& usedTriangles, std::shared_ptr<Pyramid> p1, std::shared_ptr<Pyramid> p2)
+{
+	p1->removed = true;
+	p2->removed = true;
+	// Recherche des points communs entre les deux pyramides
+	// a b c : Points en commun
+	// d : Point de la pyramide 1 uniquement
+	// e : Point de la pyramide 2 uniquement
+	unsigned int a = -1, b = -1, c = -1, d = -1, e = -1;
+	if (p1->p1 == p2->p1 || p1->p1 == p2->p2 || p1->p1 == p2->p3 || p1->p1 == p2->p4)
+		a = p1->p1;
+	if (p1->p2 == p2->p1 || p1->p2 == p2->p2 || p1->p2 == p2->p3 || p1->p2 == p2->p4)
+	{
+		if (a == -1)
+			a = p1->p2;
+		else
+			b = p1->p2;
+	}
+	if (p1->p3 == p2->p1 || p1->p3 == p2->p2 || p1->p3 == p2->p3 || p1->p3 == p2->p4)
+	{
+		if (b == -1)
+			b = p1->p3;
+		else
+			c = p1->p3;
+	}
+	if (p1->p4 == p2->p1 || p1->p4 == p2->p2 || p1->p4 == p2->p3 || p1->p4 == p2->p4)
+		c = p1->p4;
+
+	d = (p1->p1 == a) ? ((p1->p2 == a || p1->p2 == b) ? ((p1->p3 == b || p1->p3 == c) ? p1->p4 : p1->p3) : p1->p2) : p1->p1;
+	e = (p1->p1 == a || p1->p1 == b || p1->p1 == c) ? ((p1->p2 == a || p1->p2 == b || p1->p2 == c) ? ((p1->p3 == a || p1->p3 == b || p1->p3 == c) ? p1->p4 : p1->p3) : p1->p2) : p1->p1;
+
+	// Creation des nouvelles pyramides
+	// Nouveaux points en communs : d + e + (a b ou c en fonction du rand)
+	// Point de la pyramide 1 uniquement : a b ou c en fonction du rand
+	// Point de la pyramide 2 uniquement : a b ou c en fonction du rand
+	int random = rand() % 3;
+	if (random == 0)
+		createPyramidsAndAddUsedTriangles(usedTriangles, d, e, a, b, c);
+	else if (random == 1)
+		createPyramidsAndAddUsedTriangles(usedTriangles, d, e, b, c, a);
+	else
+		createPyramidsAndAddUsedTriangles(usedTriangles, d, e, c, a, b);
+}
 
 
+void Object::flipping3D()
+{
+	int loops = 0;
+	bool changed = false;
+	usedTrianglesOrig.clear();
+	std::vector<std::shared_ptr<Triangle>> usedTrianglesCopy;
+	std::vector<std::shared_ptr<Pyramid>> newPyramids;
+	for each (auto triangle in usedTrianglesOrig)
+	{
+		usedTrianglesCopy.push_back(triangle);
+	}
+	while (usedTrianglesCopy.size() > 0 && loops < 5000)
+	{
+		++loops;
+		std::shared_ptr<Triangle> face = usedTrianglesCopy.back();
+		usedTrianglesCopy.pop_back();
+		if (face->p1 != nullptr && face->p2 != nullptr)
+		{
+			std::shared_ptr<Circle> circle = getCircumsphere(face->p1), circle2 = getCircumsphere(face->p2);
+			if (containsPyramid(circle, face->p2) || containsPyramid(circle2, face->p1))
+			{
+				createNewPyramids(usedTrianglesCopy, face->p1, face->p2);
+			}
+		}
+	}
+	if (loops >= 5000)
+		std::cout << "Lots of loop" << std::endl;
+	usedTrianglesOrig.clear();
+	std::shared_ptr<Triangle> t1, t2, t3, t4;
+	for each (auto p in pyramids)
+	{
+		if (!p->removed)
+		{
+			newPyramids.push_back(p);
+			if (std::find(usedTrianglesOrig.begin(), usedTrianglesOrig.end(), p->t1) == usedTrianglesOrig.end()) {
+				usedTrianglesOrig.push_back(p->t1);
+			}
+			if (std::find(usedTrianglesOrig.begin(), usedTrianglesOrig.end(), p->t2) == usedTrianglesOrig.end()) {
+				usedTrianglesOrig.push_back(p->t2);
+			}
+			if (std::find(usedTrianglesOrig.begin(), usedTrianglesOrig.end(), p->t3) == usedTrianglesOrig.end()) {
+				usedTrianglesOrig.push_back(p->t3);
+			}
+			if (std::find(usedTrianglesOrig.begin(), usedTrianglesOrig.end(), p->t4) == usedTrianglesOrig.end()) {
+				usedTrianglesOrig.push_back(p->t4);
+			}
+		}
+	}
+	pyramids = newPyramids;
+}
+
+bool Object::containsPyramid(std::shared_ptr<Circle> circle, std::shared_ptr<Pyramid> pyramid)
+{
+	float p1X = points.at(pyramid->p1)->getX(), p1Y = points.at(pyramid->p1)->getY(), p1Z = points.at(pyramid->p1)->getZ();
+	float p2X = points.at(pyramid->p2)->getX(), p2Y = points.at(pyramid->p2)->getY(), p2Z = points.at(pyramid->p2)->getZ();
+	float p3X = points.at(pyramid->p3)->getX(), p3Y = points.at(pyramid->p3)->getY(), p3Z = points.at(pyramid->p3)->getZ();
+	float p4X = points.at(pyramid->p4)->getX(), p4Y = points.at(pyramid->p4)->getY(), p4Z = points.at(pyramid->p4)->getZ();
+	if (((circle->x - p1X) * (circle->x - p1X) + (circle->y - p1Y) * (circle->y - p1Y) + (circle->z - p1Z) * (circle->z - p1Z)) > circle->r2
+	&& ((circle->x - p2X) * (circle->x - p2X) + (circle->y - p2Y) * (circle->y - p2Y) + (circle->z - p2Z) * (circle->z - p2Z)) > circle->r2
+	&& ((circle->x - p3X) * (circle->x - p3X) + (circle->y - p3Y) * (circle->y - p3Y) + (circle->z - p3Z) * (circle->z - p3Z)) > circle->r2
+	&& ((circle->x - p4X) * (circle->x - p4X) + (circle->y - p4Y) * (circle->y - p4Y) + (circle->z - p4Z) * (circle->z - p4Z)) > circle->r2)
+		return true;
+	return false;
+}
+
+std::shared_ptr<Circle> Object::getCircumsphere(std::shared_ptr<Pyramid> p)
+{
+	if (p->circumSphere != nullptr)
+		return p->circumSphere;
+	double a[3];
+	float p1X = points.at(p->p1)->getX(), p1Y = points.at(p->p1)->getY(), p1Z = points.at(p->p1)->getZ();
+	float p2X = points.at(p->p2)->getX(), p2Y = points.at(p->p2)->getY(), p2Z = points.at(p->p2)->getZ();
+	float p3X = points.at(p->p3)->getX(), p3Y = points.at(p->p3)->getY(), p3Z = points.at(p->p3)->getZ();
+	float p4X = points.at(p->p4)->getX(), p4Y = points.at(p->p4)->getY(), p4Z = points.at(p->p4)->getZ();
+	a[0] = pow(p2X - p1X, 2) + pow(p2Y - p1Y, 2) + pow(p2Z - p1Z, 2);
+	a[1] = pow(p3X - p1X, 2) + pow(p3Y - p1Y, 2) + pow(p3Z - p1Z, 2);
+	a[2] = pow(p4X - p1X, 2) + pow(p4Y - p1Y, 2) + pow(p4Z - p1Z, 2);
+	std::shared_ptr<Circle> c(new Circle());
+	c->r = 0.5 * sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+	c->r2 = c->r * c->r;
+	c->x = p1X + 0.5 * a[0];
+	c->y = p1Y + 0.5 * a[1];
+	c->z = p1Z + 0.5 * a[2];
+	p->circumSphere = c;
+	return c;
+}
+/*
 void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 {
 	int loops = 0;
@@ -401,19 +690,19 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 				circle = edge->t1->getCircumCenter();
 			else
 			{
-				circle = circumsedCircleconst(points.at(i1), points.at(i2), points.at(i3));
+				circle = circumsedCircle(points.at(i1), points.at(i2), points.at(i3));
 				edge->t1->setCircumCenter(circle);
 			}
 			if (edge->t2->hasCircumCircle())
 				circle2 = edge->t2->getCircumCenter();
 			else
 			{
-				circle2 = circumsedCircleconst(points.at(it1), points.at(it2), points.at(it3));
+				circle2 = circumsedCircle(points.at(it1), points.at(it2), points.at(it3));
 				edge->t2->setCircumCenter(circle2);
 			}
 			auto point = points.at(c), point2 = points.at(d);
-			if (sqrt((circle.x - point->getX()) * (circle.x - point->getX()) + (circle.y - point->getY()) * (circle.y - point->getY())) <= circle.r 
-				|| sqrt((circle2.x - point2->getX()) * (circle2.x - point2->getX()) + (circle2.y - point2->getY()) * (circle2.y - point2->getY())) <= circle2.r)
+			if (sqrt((circle.x - point->getX()) * (circle.x - point->getX()) + (circle.y - point->getY()) * (circle.y - point->getY()) + (circle.z - point->getZ()) * (circle.z - point->getZ())) <= circle.r
+				|| sqrt((circle2.x - point2->getX()) * (circle2.x - point2->getX()) + (circle2.y - point2->getY()) * (circle2.y - point2->getY()) + (circle2.z - point2->getZ()) * (circle2.z - point2->getZ())) <= circle2.r)
 			{
 				edge->t1->removed = true;
 				edge->t2->removed = true;
@@ -439,6 +728,143 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 		t2->setCircumCenter(t->getCircumCenter());
 	}
 }
+*/
+
+unsigned short Object::simpleTriangulation3D(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi, unsigned int firstIndex)
+{
+	pyramids.clear();
+	usedTrianglesOrig.clear();
+	std::sort(points.begin(), points.end(), cmpPointsAbsAndOrd);
+
+	StatesimpleTriangulation state = INIT_FRIST_POINT;
+	int currentIndice = 0;
+	std::vector<std::shared_ptr<Triangle>> oldUsedTriangles;
+	bool found = false;
+	for each (auto point in points)
+	{
+		vboCoords.push_back(point->getX());
+		vboCoords.push_back(point->getY());
+		vboCoords.push_back(point->getZ());
+		vboCoords.push_back(point->getZ());
+		if (!point->getSelected())
+			vboCoords.push_back(1.0f);
+		else
+			vboCoords.push_back(0.0f);
+		vboCoords.push_back(1.f-point->getZ());
+		if (currentIndice > 3)
+		{
+			oldUsedTriangles.clear();
+			for each (auto triangle in usedTrianglesOrig)
+				oldUsedTriangles.push_back(triangle);
+			for each (auto triangle in oldUsedTriangles)
+			{
+				if (triangle->p1 == nullptr || triangle->p2 == nullptr)
+				{
+					std::cout << "E : " << triangle->getIndice1() << ";"  << triangle->getIndice2() << ";" << triangle->getIndice3() << ";" << std::endl;
+					found = false;
+					float angle = calcAngle3D(triangle, point);
+					if (angle > 0 && triangle->p1 != nullptr)
+						found = true;
+					else if (angle <= 0 && triangle->p2 != nullptr)
+						found = true;
+					if (!found)
+						createPyramidsAndAddUsedTriangles(usedTrianglesOrig, triangle->getIndice1(), triangle->getIndice2(), triangle->getIndice3(), currentIndice, -1);
+				}
+				else
+					std::cout << "F : " << triangle->getIndice1() << ";" << triangle->getIndice2() << ";" << triangle->getIndice3() << ";" << std::endl;
+			}
+		}
+		else if (currentIndice == 3)
+			createPyramidsAndAddUsedTriangles(usedTrianglesOrig, 0, 1, 2, 3, -1);
+		currentIndice++;
+	}
+
+	if (flipping)
+		this->flipping3D();
+	for each (auto pyramid in pyramids)
+	{
+		if (!pyramid->removed)
+		{
+			eboIndices.push_back(pyramid->p1 + firstIndex);
+			eboIndices.push_back(pyramid->p2 + firstIndex);
+			eboIndices.push_back(pyramid->p3 + firstIndex);
+			eboIndices.push_back(pyramid->p1 + firstIndex);
+			eboIndices.push_back(pyramid->p3 + firstIndex);
+			eboIndices.push_back(pyramid->p4 + firstIndex);
+			eboIndices.push_back(pyramid->p2 + firstIndex);
+			eboIndices.push_back(pyramid->p3 + firstIndex);
+			eboIndices.push_back(pyramid->p4 + firstIndex);
+		}
+	}
+	int size = 0;
+	// TODO Voronoi
+	/*
+	if (voronoi)
+	{
+		for each (auto edge in usedEdges)
+		{
+			if (edge->t1 != nullptr && edge->t2 != nullptr)
+			{
+				Circle c1 = edge->t1->getCircumCenter(), c2 = edge->t2->getCircumCenter();
+				size += 2;
+				vboCoords.push_back(c1.x);
+				vboCoords.push_back(c1.y);
+				vboCoords.push_back(c1.z);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(c2.x);
+				vboCoords.push_back(c2.y);
+				vboCoords.push_back(c2.z);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+			}
+			else if (edge->t1 != nullptr)
+			{
+				Circle c1 = edge->t1->getCircumCenter();
+				size += 2;
+				vboCoords.push_back(c1.x);
+				vboCoords.push_back(c1.y);
+				vboCoords.push_back(c1.z);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+				float x = points.at(edge->v2)->getX() - points.at(edge->v1)->getX();
+				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
+				vboCoords.push_back(c1.x + y);
+				vboCoords.push_back(c1.y - x);
+				vboCoords.push_back(c1.z - x);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+			}
+			else if (edge->t2 != nullptr)
+			{
+				Circle  c2 = edge->t2->getCircumCenter();
+				size += 2;
+				vboCoords.push_back(c2.x);
+				vboCoords.push_back(c2.y);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(0.0f);
+				float x = points.at(edge->v2)->getX() - points.at(edge->v1)->getX();
+				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
+				vboCoords.push_back(c2.x - y);
+				vboCoords.push_back(c2.y + x);
+				vboCoords.push_back(c2.z - x);
+				vboCoords.push_back(0.0f);
+				vboCoords.push_back(1.0f);
+				vboCoords.push_back(1.0f);
+			}
+		}
+	}
+	*/
+	return size;
+}
+
+/*
 
 unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi, unsigned int firstIndex)
 {
@@ -453,7 +879,7 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 	{
 		vboCoords.push_back(point->getX());
 		vboCoords.push_back(point->getY());
-		vboCoords.push_back(1.0f);
+		vboCoords.push_back(point->getZ());
 		vboCoords.push_back(1.0f);
 		if (!point->getSelected())
 			vboCoords.push_back(1.0f);
@@ -504,13 +930,13 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 				size += 2;
 				vboCoords.push_back(c1.x);
 				vboCoords.push_back(c1.y);
-				vboCoords.push_back(1.0f);
+				vboCoords.push_back(c1.z);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(c2.x);
 				vboCoords.push_back(c2.y);
-				vboCoords.push_back(1.0f);
+				vboCoords.push_back(c2.z);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
@@ -521,7 +947,7 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 				size += 2;
 				vboCoords.push_back(c1.x);
 				vboCoords.push_back(c1.y);
-				vboCoords.push_back(1.0f);
+				vboCoords.push_back(c1.z);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(0.0f);
@@ -529,7 +955,7 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
 				vboCoords.push_back(c1.x + y);
 				vboCoords.push_back(c1.y - x);
-				vboCoords.push_back(1.0f);
+				vboCoords.push_back(c1.z - x);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(1.0f);
@@ -548,7 +974,7 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 				float y = points.at(edge->v2)->getY() - points.at(edge->v1)->getY();
 				vboCoords.push_back(c2.x - y);
 				vboCoords.push_back(c2.y + x);
-				vboCoords.push_back(1.0f);
+				vboCoords.push_back(c2.z - x);
 				vboCoords.push_back(0.0f);
 				vboCoords.push_back(1.0f);
 				vboCoords.push_back(1.0f);
@@ -557,6 +983,7 @@ unsigned short Object::simpleTriangulation(std::vector<float>& vboCoords, std::v
 	}
 	return size;
 }
+*/
 
 Object::~Object()
 {
@@ -564,7 +991,7 @@ Object::~Object()
 
 bool cmpPointsAbsAndOrd(const std::shared_ptr<Point>& a, const std::shared_ptr<Point>& b)
 {
-	return (a->getX() < b->getX() || (a->getX() == b->getX() && a->getY() < b->getY()));
+	return (a->getX() < b->getX() || (a->getX() == b->getX() && a->getY() < b->getY()) || (a->getX() == b->getX() && a->getY() == b->getY() && a->getZ() < b->getZ()));
 }
 
 bool cmpPointsAngleFromBarycentre(const std::shared_ptr<Point>& a, const std::shared_ptr<Point>& b)
@@ -572,13 +999,13 @@ bool cmpPointsAngleFromBarycentre(const std::shared_ptr<Point>& a, const std::sh
 	return (a->getAngleFromBary() < b->getAngleFromBary());
 }
 
-std::shared_ptr<Point> Object::findNearestPoint(float x, float y)
+std::shared_ptr<Point> Object::findNearestPoint(float x, float y, float z)
 {
 	std::shared_ptr<Point> best = nullptr;
 	float min = FLT_MAX, dist;
 	for each (auto p in points)
 	{
-		dist = sqrt((x - p->getX()) * (x - p->getX()) + (y - p->getY()) * (y - p->getY()));
+		dist = sqrt((x - p->getX()) * (x - p->getX()) + (y - p->getY()) * (y - p->getY()) + (z - p->getZ()) * (z - p->getZ()));
 		if (dist < min)
 		{
 			min = dist;
