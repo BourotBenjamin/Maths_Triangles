@@ -180,12 +180,15 @@ void window_onClick(GLFWwindow* activeWindow, int button, int action, int mods)
 			selectedPoint->setSelected(false);
 			currentEditMode = ADD;
 		}
+		else if (currentEditMode == MULTIPLE)
+		{
+			o->generatePoints(x, y, 0.0, MAX_DIST, NB_POINTS);
+		}
 		else
 		{
-			o->generatePoints(x, y, 0.0);
-			/*p1 = std::shared_ptr<Point>(new Point(x, y, rand() % 100 / 100.f));
+			p1 = std::shared_ptr<Point>(new Point(x, y, rand() % 100 / 100.f));
 			// TODO : getZ
-			o->addPoint(p1);*/
+			o->addPoint(p1);
 		}
 		updateVBO();
 	}
@@ -222,6 +225,12 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 			updateVBO();
 			currentEditMode = ADD;
 			break;
+		case GLFW_KEY_KP_9:
+			currentEditMode = MULTIPLE;
+			break;
+		case GLFW_KEY_KP_8:
+			currentEditMode = ADD;
+			break;
 		case GLFW_KEY_KP_0:
 			currentMode = SIMPLE_DRAW;
 			updateVBO();
@@ -245,6 +254,18 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 		case GLFW_KEY_KP_5:
 			currentMode = TRIANGULATION_WITH_VORONOI;
 			updateVBO();
+			break;
+		case GLFW_KEY_KP_ADD:
+			++NB_POINTS;
+			break;
+		case GLFW_KEY_KP_SUBTRACT:
+			--NB_POINTS;
+			break;
+		case GLFW_KEY_KP_MULTIPLY:
+			MAX_DIST+=10;
+			break;
+		case GLFW_KEY_KP_DIVIDE:
+			MAX_DIST-=10;
 			break;
 		}
 	}

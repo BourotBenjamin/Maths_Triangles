@@ -30,7 +30,8 @@ enum Mode {
 enum EditMode {
 	ADD,
 	FIND,
-	MOVE
+	MOVE,
+	MULTIPLE
 };
 
 int window_init();
@@ -51,6 +52,7 @@ int pSize;
 Mode currentMode = SIMPLE_DRAW;
 EditMode currentEditMode = ADD;
 std::vector<unsigned short> enveloppesSizes, voronoisSizes, triangulationsSizes;
+int MAX_DIST = 400, NB_POINTS = 50;
 
 
 #endif

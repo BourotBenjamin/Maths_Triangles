@@ -12,6 +12,12 @@ struct UsedEdge
 	std::shared_ptr<Triangle> t1 = nullptr, t2 = nullptr;
 };
 
+struct Edge
+{
+	unsigned int v1, v2;
+	Edge(unsigned int v1, unsigned int v2) { this->v1 = v1; this->v2 = v2; }
+};
+
 
 class Object
 {
@@ -21,7 +27,7 @@ public:
 	void removePoint(std::shared_ptr<Point>& point);
 	//void addTriangle(std::shared_ptr<Triangle>& triangle);
 	void addPoint(std::shared_ptr<Point>& point);
-	void generatePoints(float x, float y, float z);
+	void Object::generatePoints(float x, float y, float z, int maxDist, int nbPoints);
 	std::shared_ptr<Point> getNearestPoint(float x, float y);
 	unsigned short Object::getPoints(std::vector<float>& vboCoords);
 	unsigned short getEnveloppeJarvis(std::vector<float>& vboCoords);
@@ -37,9 +43,11 @@ public:
 	void Object::createNewPyramids(std::vector<std::shared_ptr<Triangle>>& usedTriangles, std::shared_ptr<Pyramid> p1, std::shared_ptr<Pyramid> p2);
 	void Object::flipping3D();
 	std::shared_ptr<Circle> Object::getCircumsphere(std::shared_ptr<Pyramid> p);
+	Circle Object::circumCircle(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c);
 	bool Object::containsPyramid(std::shared_ptr<Circle> circle, std::shared_ptr<Pyramid> pyramid);
 	float Object::calcAngle3D(std::shared_ptr<Triangle> triangle, std::shared_ptr<Point> D);
 	void addPyramidToTriangleUsed(std::shared_ptr<Triangle> triangle, unsigned int pointNotOnTriangle, std::shared_ptr<Pyramid> pyramid);
+	unsigned short Object::delaunayBowyerWatson(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool voronoi, unsigned int firstIndex);
 	~Object();
 private:
 	std::vector<std::shared_ptr<Triangle>> usedTrianglesOrig;
@@ -48,7 +56,6 @@ private:
 	float xBarycentre;
 	float yBarycentre;
 	float zBarycentre;
-	int MAX_DIST = 400, NB_POINTS = 50;
 };
 bool cmpPointsAbsAndOrd(const std::shared_ptr<Point>& a, const std::shared_ptr<Point>& b);
 bool cmpPointsAngleFromBarycentre(const std::shared_ptr<Point>& a, const std::shared_ptr<Point>& b);

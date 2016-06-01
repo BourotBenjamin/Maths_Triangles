@@ -32,6 +32,7 @@ public:
 	~Triangle();
 	std::shared_ptr<Pyramid> p1, p2;
 	bool hasPoints(unsigned int p1, unsigned int p2, unsigned int p3);
+	bool done = false;
 private:
 	unsigned short indice1, indice2, indice3;
 	Circle circumCenter;

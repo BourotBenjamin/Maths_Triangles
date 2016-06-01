@@ -5,6 +5,11 @@
 Object::Object()
 {
 	pyramids = std::vector<std::shared_ptr<Pyramid>>();
+	/*
+	points.push_back(std::shared_ptr<Point>(new Point(0.f, 0.f, 0.f)));
+	points.push_back(std::shared_ptr<Point>(new Point(10000.f, 0.f, 0.f)));
+	points.push_back(std::shared_ptr<Point>(new Point(5000.f, 10000.f, 0.f)));
+	*/
 }
 /*
 void Object::addTriangle(std::shared_ptr<Triangle>& triangle)
@@ -25,17 +30,18 @@ float getRandomCoords(int maxDist, float middle)
 	return rand() % (dist * 2) + middle - dist;
 }
 
-void Object::generatePoints(float x, float y, float z)
+void Object::generatePoints(float x, float y, float z, int maxDist, int nbPoints)
 {
+	points.push_back(std::shared_ptr<Point>(new Point(x, y, z)));
 	int i = 0;
-	float x2, y2, z2, tmp;
+	float x2, y2, z2;
 	bool ok;
-	while (i < NB_POINTS)
+	while (i < nbPoints)
 	{
 		++i;
-		x2 = getRandomCoords(MAX_DIST, x);
-		y2 = getRandomCoords(MAX_DIST, y);
-		//z2 = getRandomCoords(MAX_DIST, z);
+		x2 = getRandomCoords(maxDist, x);
+		y2 = getRandomCoords(maxDist, y);
+		z2 = getRandomCoords(maxDist, z);
 		z2 = 0.0f;
 		points.push_back(std::shared_ptr<Point>(new Point(x2, y2, z2)));
 	}
@@ -293,13 +299,18 @@ float Object::calcAngle3D(std::shared_ptr<Triangle> triangle, std::shared_ptr<Po
 	float aX = points.at(triangle->getIndice1())->getX(), aY = points.at(triangle->getIndice1())->getX(), aZ = points.at(triangle->getIndice1())->getZ();
 	float bX = points.at(triangle->getIndice2())->getX(), bY = points.at(triangle->getIndice2())->getX(), bZ = points.at(triangle->getIndice2())->getZ();
 	float cX = points.at(triangle->getIndice3())->getX(), cY = points.at(triangle->getIndice3())->getX(), cZ = points.at(triangle->getIndice3())->getZ();
-	float dX = D->getX() - ((aX + bX + cX) / 3), dY = D->getY() - ((aY + bY + cY) / 3);
-	//float dX = D->getX() , dY = D->getY();
 	float nX = (cY - aY) * (bZ - aZ) - (cZ - aZ) * (bY - aY);
 	float nY = (cZ - aZ) * (bX - aX) - (cX - aX) * (bZ - aZ);
 	float nZ = (cX - aX) * (bY - aY) - (cY - aY) * (bX - aX);
+	// Vecteur normal N
 
-	float angle = (atan2(nY, nX) - atan2(dY, dX));
+	// Angle D CFace N
+	// CFaceNx = nX car la normal part de CFace
+
+	float dCFaceX = ((aX + bX + cX) / 3) - D->getX();
+	float dCFaceY = ((aY + bY + cY) / 3) - D->getY();
+	//float dX = D->getX() , dY = D->getY();
+	float angle = (atan2(dCFaceY, dCFaceX) - atan2(nY, nX));
 	while (angle > M_PI)
 		angle -= M_PI * 2;
 	while (angle < -M_PI)
@@ -362,7 +373,7 @@ std::shared_ptr<Triangle>  Object::addUsedEdgesToVector(std::vector<std::shared_
 }
 */
 
-Circle circumsedCircle(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
+Circle Object::circumCircle(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::shared_ptr<Point>& c)
 {
 	Circle circle;
 	float aX = a->getX(), aY = a->getY(), aZ = a->getZ(), bX = b->getX(), bY = b->getY(), bZ = b->getZ(), cX = c->getX(), cY = c->getY(), cZ = c->getZ();
@@ -378,7 +389,7 @@ Circle circumsedCircle(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std
 	circle.x = (((abXacY * abZ) - (abXacZ * abY)) * acLen2 + ((acY * abXacZ) - (acZ * abXacY)) * abLen2) / (2.f * abXacLen2);
 	circle.y = (((abXacZ * abX) - (abXacX * abZ)) * acLen2 + ((acZ * abXacX) - (acX * abXacZ)) * abLen2) / (2.f * abXacLen2);
 	circle.z = (((abXacX * abY) - (abXacY * abX)) * acLen2 + ((acX * abXacY) - (acY * abXacX)) * abLen2) / (2.f * abXacLen2);
-	circle.r = sqrt(circle.x * circle.x + circle.y * circle.y + circle.z * circle.z);
+	circle.r2 = circle.x * circle.x + circle.y * circle.y + circle.z * circle.z;
 	circle.x += aX;
 	circle.y += aY;
 	circle.z += aZ;
@@ -392,7 +403,7 @@ Circle baryCentre(std::shared_ptr<Point>& a, std::shared_ptr<Point>& b, std::sha
 	circle.x = (aX + bX + cX) / 3;
 	circle.y = (aY + bY + cY) / 3;
 	circle.z = (aZ + bZ + cZ) / 3;
-	circle.r = 0;
+	circle.r2 = 0;
 	return circle;
 }
 
@@ -730,6 +741,123 @@ void Object::flipping(std::vector<std::shared_ptr<UsedEdge>>& usedEdges)
 }
 */
 
+std::shared_ptr<Triangle> superTriangle(std::vector<std::shared_ptr<Point>> points)
+{
+	return std::shared_ptr<Triangle>(new Triangle(0, 1, 2));
+}
+
+bool noEdgeInCommon(std::shared_ptr<Triangle> triangle, std::shared_ptr<Triangle> triangle2)
+{
+	unsigned int v11 = triangle->getIndice1(), v12 = triangle->getIndice2(), v13 = triangle->getIndice3(), v21 = triangle2->getIndice1(), v22 = triangle2->getIndice2(), v23 = triangle2->getIndice3();
+	return (v11 != v21 && v11 != v22 && v11 != v23) && (v12 != v21 && v12 != v22 && v12 != v23) && (v13 != v21 && v13 != v22 && v13 != v23);
+}
+
+bool notIn(std::shared_ptr<Triangle> triangle, std::vector<std::shared_ptr<Triangle>> triangles)
+{
+	for each (auto triangle2 in triangles)
+	{
+		if (triangle->hasPoints(triangle2->getIndice1(), triangle2->getIndice2(), triangle2->getIndice3()))
+			return false;
+	}
+	return true;
+}
+
+unsigned short Object::delaunayBowyerWatson(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool voronoi, unsigned int firstIndex)
+{
+	int indice = 0;
+	usedTrianglesOrig.clear();
+	std::vector<std::shared_ptr<Triangle>> toKeep;
+	std::vector<Edge> enclosing;
+	std::shared_ptr<Triangle> supertri = superTriangle(points); // Un triangle contenant tous les points à trianguler.
+	usedTrianglesOrig.push_back(supertri);
+	for each (auto sommet in points)
+	{
+		vboCoords.push_back(sommet->getX());
+		vboCoords.push_back(sommet->getY());
+		vboCoords.push_back(sommet->getZ());
+		vboCoords.push_back(0.f);
+		if (!sommet->getSelected())
+			vboCoords.push_back(1.0f);
+		else
+			vboCoords.push_back(0.0f);
+		vboCoords.push_back(0.f);
+		if (indice > 2)
+		{
+			// Tous les triangles dont le cercle circonscrit contient le sommet à ajouter sont identifiés,
+			// l'ensemble de leurs arêtes forment un polygone englobant.
+
+			// Démarrer avec un polygone englobant vide.
+			enclosing.clear();
+			// Pour l'instant, il n'y a aucun triangle subdivisé y supprimer.
+			toKeep.clear();
+			for each (auto triangle in usedTrianglesOrig)
+			{
+				if (!triangle->hasCircumCircle())
+					triangle->setCircumCenter(this->circumCircle(points.at(triangle->getIndice1()), points.at(triangle->getIndice2()), points.at(triangle->getIndice3())));
+				Circle circle = triangle->getCircumCenter();
+				if (circle.x < sommet->getX() && ((circle.x - sommet->getX())*(circle.x - sommet->getX())) > circle.r2)
+					triangle->done = true;
+				// Si le sommet courant est dans le cercle circonscrit du triangle courant,
+				if (((circle.x - sommet->getX())*(circle.x - sommet->getX())) + ((circle.y - sommet->getY())*(circle.y - sommet->getY())) + ((circle.z - sommet->getZ())*(circle.z - sommet->getZ())) < circle.r2)
+				{
+					// ajouter les arêtes de ce triangle au polygone candidat,
+					enclosing.push_back(Edge(triangle->getIndice1(), triangle->getIndice2()));
+					enclosing.push_back(Edge(triangle->getIndice2(), triangle->getIndice3()));
+					enclosing.push_back(Edge(triangle->getIndice3(), triangle->getIndice1()));
+				}
+				else
+					toKeep.push_back(triangle);
+			}
+			usedTrianglesOrig.clear();
+			for each (auto triangle in toKeep)
+			{
+				if (notIn(triangle, usedTrianglesOrig))
+				{
+					usedTrianglesOrig.push_back(triangle);
+				}
+			}
+			for each (auto edge in enclosing)
+			{
+				std::shared_ptr<Triangle> triangle(new Triangle(edge.v1, edge.v2, indice));
+				triangle->done = false;
+				if (notIn(triangle, usedTrianglesOrig))
+				{
+					usedTrianglesOrig.push_back(triangle);
+				}
+			}
+		}
+		++indice;
+		std::cout << indice << std::endl;
+	}
+
+	for each (auto triangle in usedTrianglesOrig)
+	{
+		if (noEdgeInCommon(triangle, supertri))
+		{
+			eboIndices.push_back(triangle->getIndice1() + firstIndex);
+			eboIndices.push_back(triangle->getIndice2() + firstIndex);
+			eboIndices.push_back(triangle->getIndice3() + firstIndex);
+		}
+	}
+	return 0;
+}
+/*
+
+        for triangle in à_supprimer:
+             triangles.remove( triangle )
+        # Créer de nouveaux triangles, en utilisant le sommet courant et le polygone englobant.
+        for arête in englobant:
+            point_A, point_B = arête
+            # Ajoute un nouveau triangle à la triangulation.
+            triangle = [ point_A, point_B, sommet ]
+            triangles += [ triangle ]
+            # Il faudra le considérer au prochain ajout de point.
+            fait[triangle] = False
+        # Supprime les triangles ayant au moins une arête en commun avec le super-triangle.
+        triangulation = non_supertriangle( triangles )
+    return triangulation
+*/
+
 unsigned short Object::simpleTriangulation3D(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi, unsigned int firstIndex)
 {
 	pyramids.clear();
@@ -760,18 +888,15 @@ unsigned short Object::simpleTriangulation3D(std::vector<float>& vboCoords, std:
 			{
 				if (triangle->p1 == nullptr || triangle->p2 == nullptr)
 				{
-					std::cout << "E : " << triangle->getIndice1() << ";"  << triangle->getIndice2() << ";" << triangle->getIndice3() << ";" << std::endl;
 					found = false;
-					float angle = calcAngle3D(triangle, point);
+					/*float angle = calcAngle3D(triangle, point);
 					if (angle > 0 && triangle->p1 != nullptr)
 						found = true;
 					else if (angle <= 0 && triangle->p2 != nullptr)
-						found = true;
+						found = true;*/
 					if (!found)
 						createPyramidsAndAddUsedTriangles(usedTrianglesOrig, triangle->getIndice1(), triangle->getIndice2(), triangle->getIndice3(), currentIndice, -1);
 				}
-				else
-					std::cout << "F : " << triangle->getIndice1() << ";" << triangle->getIndice2() << ";" << triangle->getIndice3() << ";" << std::endl;
 			}
 		}
 		else if (currentIndice == 3)
