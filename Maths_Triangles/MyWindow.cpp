@@ -257,15 +257,19 @@ void window_keyPressed(GLFWwindow* activeWindow, int key, int scancode, int acti
 			break;
 		case GLFW_KEY_KP_ADD:
 			++NB_POINTS;
+			std::cout << "NB Points : " << NB_POINTS << std::endl;
 			break;
 		case GLFW_KEY_KP_SUBTRACT:
 			--NB_POINTS;
+			std::cout << "NB Points : " << NB_POINTS << std::endl;
 			break;
 		case GLFW_KEY_KP_MULTIPLY:
 			MAX_DIST+=10;
+			std::cout << "Max dist : " << MAX_DIST << std::endl;
 			break;
 		case GLFW_KEY_KP_DIVIDE:
-			MAX_DIST-=10;
+			MAX_DIST -= 10;
+			std::cout << "Max dist : " << MAX_DIST << std::endl;
 			break;
 		}
 	}

@@ -18,6 +18,55 @@ void Object::addTriangle(std::shared_ptr<Triangle>& triangle)
 }
 */
 
+float maxZ = 400.f;
+
+void Object::generateTriangulation3D(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, unsigned int firstIndex, bool voronoi)
+{
+	triangulation.insert(pts3D.begin(), pts3D.end());
+	if (triangulation.is_valid())
+	{
+		int i = 0;
+		auto face = triangulation.finite_cells_begin();
+		while (face != triangulation.finite_cells_end())
+		{
+			vboCoords.push_back(face->vertex(0)->point().x());
+			vboCoords.push_back(face->vertex(0)->point().y());
+			if (voronoi)
+				vboCoords.push_back(face->vertex(0)->point().z());
+			else
+				vboCoords.push_back(0.0f);
+			vboCoords.push_back((face->vertex(0)->point().z() + maxZ) / (maxZ * 2.0f));
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(face->vertex(1)->point().x());
+			vboCoords.push_back(face->vertex(1)->point().y());
+			if (voronoi)
+				vboCoords.push_back(face->vertex(1)->point().z());
+			else
+				vboCoords.push_back(0.0f);
+			vboCoords.push_back((face->vertex(1)->point().z() + maxZ) / (maxZ * 2.0f));
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(face->vertex(2)->point().x());
+			vboCoords.push_back(face->vertex(2)->point().y());
+			if (voronoi)
+				vboCoords.push_back(face->vertex(2)->point().z());
+			else
+				vboCoords.push_back(0.0f);
+			vboCoords.push_back((face->vertex(2)->point().z() + maxZ) / (maxZ * 2.0f));
+			vboCoords.push_back(1.0f);
+			vboCoords.push_back(1.0f);
+			eboIndices.push_back(i * 3 + firstIndex);
+			eboIndices.push_back(i * 3 + 1 + firstIndex);
+			eboIndices.push_back(i * 3 + 2 + firstIndex);
+			++i;
+			++face;
+		}
+	}
+	else
+		std::cout << "Invalid" << std::endl;
+}
+
 float getRandomCoords(int maxDist, float middle)
 {
 	int dist = maxDist / 10;
@@ -36,14 +85,15 @@ void Object::generatePoints(float x, float y, float z, int maxDist, int nbPoints
 	int i = 0;
 	float x2, y2, z2;
 	bool ok;
+	maxZ = maxDist * 1.0f;
 	while (i < nbPoints)
 	{
 		++i;
 		x2 = getRandomCoords(maxDist, x);
 		y2 = getRandomCoords(maxDist, y);
 		z2 = getRandomCoords(maxDist, z);
-		z2 = 0.0f;
 		points.push_back(std::shared_ptr<Point>(new Point(x2, y2, z2)));
+		pts3D.push_back(Point_3(x2, y2, z2));
 	}
 	std::cout << " Points " << std::endl;
 }
@@ -56,6 +106,7 @@ void Object::addPoint(std::shared_ptr<Point>& p)
 			return;
 	}
 	points.push_back(p);
+	pts3D.push_back(Point_3(p->getX(), p->getY(), p->getZ()));
 }
 
 std::shared_ptr<Point> Object::getNearestPoint(float x, float y)
@@ -767,7 +818,7 @@ unsigned short Object::delaunayBowyerWatson(std::vector<float>& vboCoords, std::
 	int indice = 0;
 	usedTrianglesOrig.clear();
 	std::vector<std::shared_ptr<Triangle>> toKeep;
-	std::vector<Edge> enclosing;
+	std::vector<SimpleEdge> enclosing;
 	std::shared_ptr<Triangle> supertri = superTriangle(points); // Un triangle contenant tous les points à trianguler.
 	usedTrianglesOrig.push_back(supertri);
 	for each (auto sommet in points)
@@ -801,9 +852,9 @@ unsigned short Object::delaunayBowyerWatson(std::vector<float>& vboCoords, std::
 				if (((circle.x - sommet->getX())*(circle.x - sommet->getX())) + ((circle.y - sommet->getY())*(circle.y - sommet->getY())) + ((circle.z - sommet->getZ())*(circle.z - sommet->getZ())) < circle.r2)
 				{
 					// ajouter les arêtes de ce triangle au polygone candidat,
-					enclosing.push_back(Edge(triangle->getIndice1(), triangle->getIndice2()));
-					enclosing.push_back(Edge(triangle->getIndice2(), triangle->getIndice3()));
-					enclosing.push_back(Edge(triangle->getIndice3(), triangle->getIndice1()));
+					enclosing.push_back(SimpleEdge(triangle->getIndice1(), triangle->getIndice2()));
+					enclosing.push_back(SimpleEdge(triangle->getIndice2(), triangle->getIndice3()));
+					enclosing.push_back(SimpleEdge(triangle->getIndice3(), triangle->getIndice1()));
 				}
 				else
 					toKeep.push_back(triangle);
@@ -841,24 +892,14 @@ unsigned short Object::delaunayBowyerWatson(std::vector<float>& vboCoords, std::
 	}
 	return 0;
 }
-/*
-
-        for triangle in à_supprimer:
-             triangles.remove( triangle )
-        # Créer de nouveaux triangles, en utilisant le sommet courant et le polygone englobant.
-        for arête in englobant:
-            point_A, point_B = arête
-            # Ajoute un nouveau triangle à la triangulation.
-            triangle = [ point_A, point_B, sommet ]
-            triangles += [ triangle ]
-            # Il faudra le considérer au prochain ajout de point.
-            fait[triangle] = False
-        # Supprime les triangles ayant au moins une arête en commun avec le super-triangle.
-        triangulation = non_supertriangle( triangles )
-    return triangulation
-*/
 
 unsigned short Object::simpleTriangulation3D(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi, unsigned int firstIndex)
+{
+	generateTriangulation3D(vboCoords, eboIndices, firstIndex, voronoi);
+	return 0;
+}
+
+unsigned short Object::triangulation3D(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi, unsigned int firstIndex)
 {
 	pyramids.clear();
 	usedTrianglesOrig.clear();
@@ -889,11 +930,11 @@ unsigned short Object::simpleTriangulation3D(std::vector<float>& vboCoords, std:
 				if (triangle->p1 == nullptr || triangle->p2 == nullptr)
 				{
 					found = false;
-					/*float angle = calcAngle3D(triangle, point);
+					float angle = calcAngle3D(triangle, point);
 					if (angle > 0 && triangle->p1 != nullptr)
 						found = true;
 					else if (angle <= 0 && triangle->p2 != nullptr)
-						found = true;*/
+						found = true;
 					if (!found)
 						createPyramidsAndAddUsedTriangles(usedTrianglesOrig, triangle->getIndice1(), triangle->getIndice2(), triangle->getIndice3(), currentIndice, -1);
 				}
@@ -986,7 +1027,8 @@ unsigned short Object::simpleTriangulation3D(std::vector<float>& vboCoords, std:
 		}
 	}
 	*/
-	return size;
+	//return size;
+	return 0;
 }
 
 /*

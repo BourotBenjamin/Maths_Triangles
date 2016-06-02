@@ -4,6 +4,8 @@
 #include <iostream>
 #include <chrono>
 #include <ctime>
+#include "typedefs.h"
+
 
 
 struct UsedEdge
@@ -12,10 +14,10 @@ struct UsedEdge
 	std::shared_ptr<Triangle> t1 = nullptr, t2 = nullptr;
 };
 
-struct Edge
+struct SimpleEdge
 {
 	unsigned int v1, v2;
-	Edge(unsigned int v1, unsigned int v2) { this->v1 = v1; this->v2 = v2; }
+	SimpleEdge(unsigned int v1, unsigned int v2) { this->v1 = v1; this->v2 = v2; }
 };
 
 
@@ -49,6 +51,9 @@ public:
 	void addPyramidToTriangleUsed(std::shared_ptr<Triangle> triangle, unsigned int pointNotOnTriangle, std::shared_ptr<Pyramid> pyramid);
 	unsigned short Object::delaunayBowyerWatson(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool voronoi, unsigned int firstIndex);
 	~Object();
+	void Object::generateTriangulation3D(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, unsigned int firstIndex, bool voronoi);
+	unsigned short Object::triangulation3D(std::vector<float>& vboCoords, std::vector<unsigned int>& eboIndices, bool flipping, bool voronoi, unsigned int firstIndex);
+	std::vector<Point_3> pts3D;
 private:
 	std::vector<std::shared_ptr<Triangle>> usedTrianglesOrig;
 	std::vector<std::shared_ptr<Pyramid>> pyramids;
@@ -56,6 +61,7 @@ private:
 	float xBarycentre;
 	float yBarycentre;
 	float zBarycentre;
+	DT3 triangulation;
 };
 bool cmpPointsAbsAndOrd(const std::shared_ptr<Point>& a, const std::shared_ptr<Point>& b);
 bool cmpPointsAngleFromBarycentre(const std::shared_ptr<Point>& a, const std::shared_ptr<Point>& b);
